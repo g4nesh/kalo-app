@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Kalo{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Welcome Section -->
+    <div class="glass-card rounded-lg p-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">Welcome back, {{ user.name }}!</h1>
+        <p class="text-gray-600">Let's create your personalized meal plan based on your goals and preferences.</p>
+    </div>
+
+    <!-- Meal Time Selection -->
+    <div class="glass-card rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">What would you like to make?</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <button class="meal-time-btn preference-option flex items-center justify-center p-4 border rounded-lg cursor-pointer hover:bg-blue-50 transition-all duration-200" data-meal="breakfast">
+                <div class="text-center">
+                    <span class="block text-2xl mb-2">🌅</span>
+                    <span class="text-gray-700 font-medium">Breakfast</span>
+                </div>
+            </button>
+            <button class="meal-time-btn preference-option flex items-center justify-center p-4 border rounded-lg cursor-pointer hover:bg-blue-50 transition-all duration-200" data-meal="lunch">
+                <div class="text-center">
+                    <span class="block text-2xl mb-2">☀️</span>
+                    <span class="text-gray-700 font-medium">Lunch</span>
+                </div>
+            </button>
+            <button class="meal-time-btn preference-option flex items-center justify-center p-4 border rounded-lg cursor-pointer hover:bg-blue-50 transition-all duration-200" data-meal="dinner">
+                <div class="text-center">
+                    <span class="block text-2xl mb-2">🌙</span>
+                    <span class="text-gray-700 font-medium">Dinner</span>
+                </div>
+            </button>
+            <button class="meal-time-btn preference-option flex items-center justify-center p-4 border rounded-lg cursor-pointer hover:bg-blue-50 transition-all duration-200" data-meal="snack">
+                <div class="text-center">
+                    <span class="block text-2xl mb-2">🍎</span>
+                    <span class="text-gray-700 font-medium">Snack</span>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Macronutrient Goals Section -->
+    <div class="glass-card rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Daily Nutrition Goals</h2>
+        <form id="macros-form" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Calories -->
+                <div class="space-y-2">
+                    <label for="calories" class="block text-sm font-medium text-gray-700">Daily Calories</label>
+                    <input type="number" id="calories" name="calories" 
+                           value="{{ user.preferences.calorie_goal if user.preferences else 2000 }}"
+                           min="1000" max="5000"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <p class="text-sm text-gray-500">Suggested: 2000-2500 calories per day</p>
+                </div>
+
+                <!-- Protein -->
+                <div class="space-y-2">
+                    <label for="protein" class="block text-sm font-medium text-gray-700">Protein (g)</label>
+                    <input type="number" id="protein" name="protein" 
+                           value="{{ user.preferences.protein_goal if user.preferences else 150 }}"
+                           min="0" max="500"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <p class="text-sm text-gray-500">Suggested: 1.6-2.2g per kg of body weight</p>
+                </div>
+
+                <!-- Carbs -->
+                <div class="space-y-2">
+                    <label for="carbs" class="block text-sm font-medium text-gray-700">Carbohydrates (g)</label>
+                    <input type="number" id="carbs" name="carbs" 
+                           value="{{ user.preferences.carbs_goal if user.preferences else 250 }}"
+                           min="0" max="1000"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <p class="text-sm text-gray-500">Suggested: 45-65% of total daily calories</p>
+                </div>
+
+                <!-- Fat -->
+                <div class="space-y-2">
+                    <label for="fat" class="block text-sm font-medium text-gray-700">Fat (g)</label>
+                    <input type="number" id="fat" name="fat" 
+                           value="{{ user.preferences.fat_goal if user.preferences else 65 }}"
+                           min="0" max="200"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <p class="text-sm text-gray-500">Suggested: 20-35% of total daily calories</p>
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Update Goals
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Food Preferences Section -->
+    <div class="glass-card rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Food Preferences</h2>
+        <p class="text-gray-600 mb-6">Help us understand your taste preferences to create meals you'll love.</p>
+        
+        <form id="preferences-form" class="space-y-8">
+            <!-- Budget Preferences -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Budget Range</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <label class="preference-option flex items-center p-3 border rounded-lg cursor-pointer">
+                        <input type="radio" name="budget" value="budget" class="sr-only" {% if user.preferences and user.preferences.budget == 'budget' %}checked{% endif %}>
+                        <span class="text-gray-700">Budget Friendly ($)</span>
+                    </label>
+                    <label class="preference-option flex items-center p-3 border rounded-lg cursor-pointer">
+                        <input type="radio" name="budget" value="moderate" class="sr-only" {% if user.preferences and user.preferences.budget == 'moderate' %}checked{% endif %}>
+                        <span class="text-gray-700">Moderate ($$)</span>
+                    </label>
+                    <label class="preference-option flex items-center p-3 border rounded-lg cursor-pointer">
+                        <input type="radio" name="budget" value="premium" class="sr-only" {% if user.preferences and user.preferences.budget == 'premium' %}checked{% endif %}>
+                        <span class="text-gray-700">Premium ($$$)</span>
+                    </label>
+                    <label class="preference-option flex items-center p-3 border rounded-lg cursor-pointer">
+                        <input type="radio" name="budget" value="luxury" class="sr-only" {% if user.preferences and user.preferences.budget == 'luxury' %}checked{% endif %}>
+                        <span class="text-gray-700">Luxury ($$$$)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Cuisine Preferences -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Preferred Cuisines</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {% for cuisine in ['italian', 'asian', 'mexican', 'mediterranean', 'indian', 'american', 'middle_eastern', 'latin'] %}
+                    <label class="preference-option flex items-center p-3 border rounded-lg cursor-pointer">
+                        <input type="checkbox" name="cuisines" value="{{ cuisine }}" class="sr-only"
+                               {% if user.preferences and user.preferences.preferred_cuisines and cuisine in user.preferences.preferred_cuisines %}checked{% endif %}>
+                        <span class="text-gray-700">{{ cuisine|title }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Taste Preferences -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Taste Preferences</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {% for taste in ['spicy', 'sweet', 'savory', 'umami', 'tangy', 'smoky', 'bitter', 'sour'] %}
+                    <label class="preference-option flex items-center p-3 border rounded-lg cursor-pointer">
+                        <input type="checkbox" name="tastes" value="{{ taste }}" class="sr-only"
+                               {% if user.preferences and user.preferences.taste_preferences and taste in user.preferences.taste_preferences %}checked{% endif %}>
+                        <span class="text-gray-700">{{ taste|title }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Mood Preferences -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Mood Preferences</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {% for mood in ['energetic', 'relaxed', 'focused', 'comfort', 'adventurous', 'healthy', 'indulgent', 'light'] %}
+                    <label class="preference-option flex items-center p-3 border rounded-lg cursor-pointer">
+                        <input type="checkbox" name="moods" value="{{ mood }}" class="sr-only"
+                               {% if user.preferences and user.preferences.mood_preferences and mood in user.preferences.mood_preferences %}checked{% endif %}>
+                        <span class="text-gray-700">{{ mood|title }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Difficulty Preferences -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Cooking Difficulty</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <label class="preference-option flex items-center p-3 border rounded-lg cursor-pointer">
+                        <input type="radio" name="difficulty" value="easy" class="sr-only"
+                               {% if user.preferences and user.preferences.difficulty == 'easy' %}checked{% endif %}>
+                        <span class="text-gray-700">Easy (15-30 mins)</span>
+                    </label>
+                    <label class="preference-option flex items-center p-3 border rounded-lg cursor-pointer">
+                        <input type="radio" name="difficulty" value="medium" class="sr-only"
+                               {% if user.preferences and user.preferences.difficulty == 'medium' %}checked{% endif %}>
+                        <span class="text-gray-700">Medium (30-45 mins)</span>
+                    </label>
+                    <label class="preference-option flex items-center p-3 border rounded-lg cursor-pointer">
+                        <input type="radio" name="difficulty" value="hard" class="sr-only"
+                               {% if user.preferences and user.preferences.difficulty == 'hard' %}checked{% endif %}>
+                        <span class="text-gray-700">Hard (45+ mins)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Save Preferences
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Generate Meal Plan Button -->
+    <div class="glass-card rounded-lg p-6">
+        <div class="text-center">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Ready to Get Your Meal Plan?</h2>
+            <p class="text-gray-600 mb-6">We'll create a personalized meal plan based on your preferences and goals.</p>
+            <button id="generate-plan" class="inline-flex items-center px-6 py-3 border border-transparent text-lg font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
+                Generate My Meal Plan
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner mb-4"></div>
+    <p class="text-lg font-medium text-gray-900">Generating your personalized meal plan...</p>
+    <p class="text-sm text-gray-500 mt-2">This will only take a moment</p>
+</div>
+
+<!-- Loading Bar -->
+<div id="loading-bar" class="loading-bar"></div>
+
+<!-- Custom Confirmation Popup -->
+<div id="confirmation-popup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4 transform transition-all">
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2" id="confirmation-title">Success!</h3>
+            <p class="text-sm text-gray-500 mb-4" id="confirmation-message">Your changes have been saved successfully.</p>
+            <button id="confirmation-close" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Show confirmation popup
+    function showConfirmation(title, message) {
+        const popup = document.getElementById('confirmation-popup');
+        const popupTitle = document.getElementById('confirmation-title');
+        const popupMessage = document.getElementById('confirmation-message');
+        
+        popupTitle.textContent = title;
+        popupMessage.textContent = message;
+        popup.classList.remove('hidden');
+        
+        // Add animation classes
+        popup.querySelector('.bg-white').classList.add('animate-fade-in');
+    }
+
+    // Hide confirmation popup
+    document.getElementById('confirmation-close').addEventListener('click', function() {
+        const popup = document.getElementById('confirmation-popup');
+        popup.classList.add('hidden');
+    });
+
+    // Handle form submissions
+    document.getElementById('macros-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        try {
+            const response = await fetch('/update_macros', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (response.ok) {
+                showConfirmation('Goals Updated!', 'Your nutrition goals have been updated successfully.');
+            } else {
+                throw new Error('Failed to update goals');
+            }
+        } catch (error) {
+            showConfirmation('Error', 'Failed to update goals. Please try again.');
+            console.error('Error:', error);
+        }
+    });
+
+    document.getElementById('preferences-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        try {
+            const response = await fetch('/update_preferences', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (response.ok) {
+                showConfirmation('Preferences Saved!', 'Your food preferences have been saved successfully.');
+            } else {
+                throw new Error('Failed to save preferences');
+            }
+        } catch (error) {
+            showConfirmation('Error', 'Failed to save preferences. Please try again.');
+            console.error('Error:', error);
+        }
+    });
+
+    // Handle meal time selection
+    document.querySelectorAll('.meal-time-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove selected state from all buttons
+            document.querySelectorAll('.meal-time-btn').forEach(btn => {
+                btn.classList.remove('selected', 'bg-blue-50', 'border-blue-500');
+            });
+            // Add selected state to clicked button
+            this.classList.add('selected', 'bg-blue-50', 'border-blue-500');
+        });
+    });
+
+    // Handle meal plan generation
+    document.getElementById('generate-plan').addEventListener('click', async function() {
+        // Show loading overlay and bar
+        document.getElementById('loading-overlay').classList.add('active');
+        document.getElementById('loading-bar').classList.add('active');
+        
+        try {
+            const response = await fetch('/generate_meal_plan', {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                window.location.href = data.redirect_url;
+            } else {
+                throw new Error('Failed to generate meal plan');
+            }
+        } catch (error) {
+            alert('Error generating meal plan. Please try again.');
+            console.error('Error:', error);
+        } finally {
+            // Hide loading elements
+            document.getElementById('loading-overlay').classList.remove('active');
+            document.getElementById('loading-bar').classList.remove('active');
+        }
+    });
+
+    // Handle preference option clicks
+    document.querySelectorAll('.preference-option').forEach(option => {
+        // Initialize selected state for radio buttons
+        const input = option.querySelector('input');
+        if (input && input.checked) {
+            option.classList.add('selected', 'bg-blue-50', 'border-blue-500');
+        }
+
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            const input = this.querySelector('input');
+            if (!input) return;
+
+            if (input.type === 'radio') {
+                // For radio buttons, unselect all others in the group
+                document.querySelectorAll(`input[name="${input.name}"]`).forEach(radio => {
+                    radio.closest('.preference-option').classList.remove('selected', 'bg-blue-50', 'border-blue-500');
+                });
+                input.checked = true;
+                this.classList.add('selected', 'bg-blue-50', 'border-blue-500');
+            } else {
+                // For checkboxes, toggle the state
+                input.checked = !input.checked;
+                if (input.checked) {
+                    this.classList.add('selected', 'bg-blue-50', 'border-blue-500');
+                } else {
+                    this.classList.remove('selected', 'bg-blue-50', 'border-blue-500');
+                }
+            }
+        });
+    });
+
+    // Auto-calculate macros based on calories
+    document.getElementById('calories').addEventListener('input', function() {
+        const calories = parseFloat(this.value) || 2000;
+        const protein = Math.round((calories * 0.3) / 4); // 30% of calories from protein
+        const carbs = Math.round((calories * 0.5) / 4);   // 50% of calories from carbs
+        const fat = Math.round((calories * 0.2) / 9);     // 20% of calories from fat
+
+        document.getElementById('protein').value = protein;
+        document.getElementById('carbs').value = carbs;
+        document.getElementById('fat').value = fat;
+    });
+</script>
+
+<style>
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.2s ease-out;
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Recommended Recipes for You</h2>
+    <p class="text-muted">Based on your preferences and macro goals</p>
+    
+    <div class="row">
+        {% for recipe in recipes %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                {% if recipe.image_url %}
+                <img src="{{ recipe.image_url }}" class="card-img-top" alt="{{ recipe.name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ recipe.name }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ recipe.cuisine }} - {{ recipe.type }}</h6>
+                    
+                    <div class="nutrition-info mb-3">
+                        <small>
+                            <strong>Calories:</strong> {{ recipe.calories }} |
+                            <strong>Protein:</strong> {{ recipe.protein }}g |
+                            <strong>Carbs:</strong> {{ recipe.carbs }}g |
+                            <strong>Fat:</strong> {{ recipe.fat }}g
+                        </small>
+                    </div>
+                    
+                    <p class="card-text">
+                        <strong>Prep Time:</strong> {{ recipe.prep_time }} mins |
+                        <strong>Cook Time:</strong> {{ recipe.cook_time }} mins |
+                        <strong>Difficulty:</strong> {{ recipe.difficulty }}
+                    </p>
+                    
+                    <div class="tags mb-3">
+                        {% for tag in recipe.tags %}
+                        <span class="badge bg-primary me-1">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <a href="{{ url_for('view_recipe', recipe_id=recipe.id) }}" class="btn btn-primary">View Recipe</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if not recipes %}
+    <div class="alert alert-info">
+        No recipes match your current preferences. Try updating your preferences or macro goals.
+    </div>
+    {% endif %}
+    
+    <div class="mt-4">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+        <a href="{{ url_for('update_preferences') }}" class="btn btn-outline-primary">Update Preferences</a>
+    </div>
+</div>
+{% endblock %} 

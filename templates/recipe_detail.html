@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ recipe.name }} - Kalo</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            {% if recipe.image_url %}
+            <div class="relative h-96">
+                <img src="{{ recipe.image_url }}" alt="{{ recipe.name }}" class="w-full h-full object-cover">
+            </div>
+            {% endif %}
+            
+            <div class="p-8">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold mb-2">{{ recipe.name }}</h1>
+                        <div class="flex items-center text-gray-600 space-x-4">
+                            <span>{{ recipe.type.title() }}</span>
+                            <span>•</span>
+                            <span>{{ recipe.cuisine }}</span>
+                            <span>•</span>
+                            <span>{{ recipe.difficulty.title() }}</span>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        {% for tag in recipe.tags %}
+                        <span class="bg-gray-100 text-gray-800 text-sm px-3 py-1 rounded-full">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <!-- Nutrition Information -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h2 class="text-xl font-semibold mb-4">Nutrition Information</h2>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Calories</p>
+                                <p class="text-lg font-semibold">{{ recipe.calories }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Protein</p>
+                                <p class="text-lg font-semibold">{{ recipe.protein }}g</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Carbs</p>
+                                <p class="text-lg font-semibold">{{ recipe.carbs }}g</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Fat</p>
+                                <p class="text-lg font-semibold">{{ recipe.fat }}g</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Time and Servings -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h2 class="text-xl font-semibold mb-4">Time & Servings</h2>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Prep Time</p>
+                                <p class="text-lg font-semibold">{{ recipe.prep_time }} min</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Cook Time</p>
+                                <p class="text-lg font-semibold">{{ recipe.cook_time }} min</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Total Time</p>
+                                <p class="text-lg font-semibold">{{ recipe.prep_time + recipe.cook_time }} min</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Servings</p>
+                                <p class="text-lg font-semibold">{{ recipe.servings }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ingredients -->
+                <div class="mb-8">
+                    <h2 class="text-2xl font-semibold mb-4">Ingredients</h2>
+                    <ul class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {% for ingredient in recipe.ingredients %}
+                        <li class="flex items-center space-x-2">
+                            <span class="text-gray-600">•</span>
+                            <span>{{ ingredient }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Instructions -->
+                <div>
+                    <h2 class="text-2xl font-semibold mb-4">Instructions</h2>
+                    <ol class="space-y-4">
+                        {% for instruction in recipe.instructions %}
+                        <li class="flex">
+                            <span class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center mr-4">
+                                {{ loop.index }}
+                            </span>
+                            <span>{{ instruction }}</span>
+                        </li>
+                        {% endfor %}
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

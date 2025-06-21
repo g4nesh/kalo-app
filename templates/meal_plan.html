@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalo - Today's Meals</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+        .meal-card {
+            transition: all 0.2s ease;
+        }
+        .meal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .nutrition-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #E5E7EB;
+            overflow: hidden;
+        }
+        .nutrition-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex-shrink-0 flex items-center">
+                        <img class="h-8 w-auto" src="{{ url_for('static', filename='img/logo.png') }}" alt="Kalo Logo">
+                        <span class="ml-2 text-xl font-semibold text-gray-900">Kalo</span>
+                    </a>
+                </div>
+                <div class="flex items-center">
+                    <a href="{{ url_for('dashboard') }}" class="text-gray-600 hover:text-gray-900 mr-4">Dashboard</a>
+                    <a href="{{ url_for('logout') }}" class="text-gray-600 hover:text-gray-900">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="glass-card rounded-lg p-6 mb-8">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">Today's Meal Plan</h1>
+            <p class="text-gray-600">Your personalized meals for today, tailored to your preferences and goals.</p>
+        </div>
+
+        <!-- Daily Summary -->
+        <div class="glass-card rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Daily Summary</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white rounded-lg p-4">
+                    <h3 class="text-sm font-medium text-gray-500">Total Calories</h3>
+                    <p class="text-2xl font-bold text-blue-600">{{ meal_plan.meal_plan[0].meals|sum(attribute='nutrition.calories') }}</p>
+                </div>
+                <div class="bg-white rounded-lg p-4">
+                    <h3 class="text-sm font-medium text-gray-500">Protein</h3>
+                    <p class="text-2xl font-bold text-green-600">{{ meal_plan.meal_plan[0].meals|sum(attribute='nutrition.protein') }}g</p>
+                </div>
+                <div class="bg-white rounded-lg p-4">
+                    <h3 class="text-sm font-medium text-gray-500">Carbs</h3>
+                    <p class="text-2xl font-bold text-yellow-600">{{ meal_plan.meal_plan[0].meals|sum(attribute='nutrition.carbs') }}g</p>
+                </div>
+                <div class="bg-white rounded-lg p-4">
+                    <h3 class="text-sm font-medium text-gray-500">Fat</h3>
+                    <p class="text-2xl font-bold text-red-600">{{ meal_plan.meal_plan[0].meals|sum(attribute='nutrition.fat') }}g</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meals -->
+        <div class="space-y-6">
+            {% for meal in meal_plan.meal_plan[0].meals %}
+            <div class="meal-card glass-card rounded-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <span class="text-sm font-medium text-blue-600">{{ meal.type|title }}</span>
+                        <h3 class="text-xl font-bold text-gray-900">{{ meal.name }}</h3>
+                    </div>
+                    <span class="text-lg font-semibold text-gray-900">${{ "%.2f"|format(meal.cost) }}</span>
+                </div>
+
+                <!-- Nutrition Info -->
+                <div class="mb-6">
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Nutrition Information</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">Calories</span>
+                                <span class="font-medium">{{ meal.nutrition.calories }}</span>
+                            </div>
+                            <div class="nutrition-bar">
+                                <div class="nutrition-bar-fill bg-blue-500" style="width: {{ (meal.nutrition.calories / 2000) * 100 }}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">Protein</span>
+                                <span class="font-medium">{{ meal.nutrition.protein }}g</span>
+                            </div>
+                            <div class="nutrition-bar">
+                                <div class="nutrition-bar-fill bg-green-500" style="width: {{ (meal.nutrition.protein / 150) * 100 }}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">Carbs</span>
+                                <span class="font-medium">{{ meal.nutrition.carbs }}g</span>
+                            </div>
+                            <div class="nutrition-bar">
+                                <div class="nutrition-bar-fill bg-yellow-500" style="width: {{ (meal.nutrition.carbs / 250) * 100 }}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">Fat</span>
+                                <span class="font-medium">{{ meal.nutrition.fat }}g</span>
+                            </div>
+                            <div class="nutrition-bar">
+                                <div class="nutrition-bar-fill bg-red-500" style="width: {{ (meal.nutrition.fat / 65) * 100 }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ingredients -->
+                <div class="mb-6">
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Ingredients</h4>
+                    <div class="bg-white rounded-lg p-4">
+                        <ul class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {% for ingredient in meal.ingredients %}
+                            <li class="flex items-center text-sm text-gray-600">
+                                <svg class="h-4 w-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                {{ ingredient }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Instructions</h4>
+                    <div class="bg-white rounded-lg p-4">
+                        <p class="text-sm text-gray-600 whitespace-pre-line">{{ meal.instructions }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end space-x-4 mt-8">
+            <a href="{{ url_for('dashboard') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Back to Dashboard
+            </a>
+            <button onclick="window.print()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Print Today's Plan
+            </button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-gray-500 text-sm">
+                <p>&copy; 2025 Kalo. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html> 

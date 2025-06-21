@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalo - Personalized Meal Planning</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+        }
+
+        .loading-bar {
+            width: 0%;
+            height: 4px;
+            background-color: #3B82F6;
+            transition: width 0.5s ease-in-out;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+        }
+        .loading-bar.active {
+            width: 100%;
+        }
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 9998;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .loading-overlay.active {
+            display: flex;
+        }
+        .loading-spinner {
+            border: 4px solid #30363d;
+            border-top: 4px solid #3B82F6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .form-section {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+        
+        .form-input {
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            width: 100%;
+            color: #c9d1d9;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .toggle-btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            transition: all 0.2s ease;
+        }
+        
+        .toggle-btn input[type="checkbox"], .toggle-btn input[type="radio"] {
+            display: none;
+        }
+        
+        .toggle-btn:hover {
+            background-color: #30363d;
+        }
+        
+        .toggle-btn input:checked + span {
+             color: #ffffff;
+        }
+        
+        .toggle-btn.checked {
+            background-color: #3B82F6;
+            border-color: #3B82F6;
+            color: white;
+        }
+        
+        .primary-btn {
+            background-color: #3B82F6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .primary-btn:hover {
+            background-color: #2563EB;
+        }
+        
+        .secondary-btn {
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .secondary-btn:hover {
+             background-color: #30363d;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="relative min-h-screen">
+        <!-- Background Gradient -->
+        <div class="absolute inset-0 z-0">
+            <div class="absolute top-0 left-0 h-96 w-96 bg-blue-900/50 rounded-full filter blur-3xl opacity-50 -translate-x-1/4 -translate-y-1/4"></div>
+            <div class="absolute bottom-0 right-0 h-96 w-96 bg-purple-900/50 rounded-full filter blur-3xl opacity-50 translate-x-1/4 translate-y-1/4"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Navigation -->
+            <nav class="py-6 flex justify-between items-center">
+                 <a href="/" class="flex-shrink-0 flex items-center">
+                    <img class="h-8 w-auto" src="{{ url_for('static', filename='img/logo.png') }}" alt="Kalo Logo">
+                    <span class="ml-2 text-xl font-semibold text-white">Kalo</span>
+                </a>
+                <div class="flex items-center space-x-2">
+                     <a href="{{ url_for('login') }}" class="px-4 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors">Sign in</a>
+                     <a href="{{ url_for('google_login') }}" 
+                           class="inline-flex items-center p-2 border border-gray-700 rounded-md bg-gray-800 text-sm font-medium text-gray-300 hover:bg-gray-700 transition-colors">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+                        </a>
+                        <a href="{{ url_for('github_login') }}" 
+                           class="inline-flex items-center p-2 border border-gray-700 rounded-md bg-gray-800 text-sm font-medium text-gray-300 hover:bg-gray-700 transition-colors">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.164 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+                        </a>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="py-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+                <!-- Left Column -->
+                <div class="space-y-8">
+                    <h1 class="text-5xl font-extrabold text-white">
+                        Welcome. <br>
+                        Craft your perfect meal.
+                    </h1>
+                    <p class="text-lg text-gray-400 max-w-lg">
+                        Stop wondering what to eat. Get personalized meal plans generated by AI, tailored to your macros, preferences, and available ingredients.
+                    </p>
+
+                    <!-- Image Scanner -->
+                    <div class="form-section space-y-4">
+                         <h2 class="text-xl font-semibold text-white">Scan Your Fridge</h2>
+                        <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+                            <input type="file" id="imageUpload" accept="image/*" class="hidden">
+                            <label for="imageUpload" class="cursor-pointer space-y-2">
+                                <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                                <p class="text-sm text-gray-400"><span class="font-medium text-blue-400">Click to upload</span> or drag and drop</p>
+                            </label>
+                        </div>
+                        <div id="previewContainer" class="hidden">
+                            <img id="imagePreview" class="max-w-full h-auto rounded-lg" alt="Preview">
+                        </div>
+                        <button id="processButton" class="w-full primary-btn hidden">
+                            Process Image
+                        </button>
+                    </div>
+                     <!-- Debug Panel -->
+                    <div id="debugPanel" class="form-section hidden">
+                        <h2 class="text-xl font-semibold text-white mb-4">Processing Results</h2>
+                        <div id="debugContent" class="space-y-2 text-sm"></div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="form-section">
+                     <h2 class="text-2xl font-bold text-white text-center mb-6">
+                        Generate Your Meal Plan
+                    </h2>
+                    <form id="demo-calculator" class="space-y-6">
+                        <!-- Nutritional Goals -->
+                        <div class="space-y-3">
+                             <label class="block text-lg font-medium text-white">Nutritional Goals</label>
+                             <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="demo-calories" class="block text-sm font-medium text-gray-400 mb-1">Calories (kcal)</label>
+                                    <input type="number" id="demo-calories" name="calories" class="form-input" placeholder="2000">
+                                </div>
+                                 <div>
+                                    <label for="demo-protein" class="block text-sm font-medium text-gray-400 mb-1">Protein (g)</label>
+                                    <input type="number" id="demo-protein" name="protein" class="form-input" placeholder="150">
+                                </div>
+                                 <div>
+                                    <label for="demo-carbs" class="block text-sm font-medium text-gray-400 mb-1">Carbs (g)</label>
+                                    <input type="number" id="demo-carbs" name="carbs" class="form-input" placeholder="250">
+                                </div>
+                                 <div>
+                                    <label for="demo-fat" class="block text-sm font-medium text-gray-400 mb-1">Fat (g)</label>
+                                    <input type="number" id="demo-fat" name="fat" class="form-input" placeholder="65">
+                                </div>
+                             </div>
+                        </div>
+
+                        <!-- Meal Type -->
+                        <div class="space-y-3">
+                            <label class="block text-lg font-medium text-white">Meal Type</label>
+                            <div id="meal-type-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="meal_type" value="breakfast"> <span>Breakfast</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="meal_type" value="lunch"> <span>Lunch</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="meal_type" value="dinner"> <span>Dinner</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="meal_type" value="snacks"> <span>Snacks</span> </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Dietary Preferences -->
+                        <div class="space-y-3">
+                            <label class="block text-lg font-medium text-white">Dietary Preferences</label>
+                            <div id="dietary-prefs-container" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="preferences" value="anything" checked> <span>Anything</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="preferences" value="vegetarian"> <span>Vegetarian</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="preferences" value="vegan"> <span>Vegan</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="preferences" value="gluten-free"> <span>Gluten-Free</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="preferences" value="dairy-free"> <span>Dairy-Free</span> </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Cuisine Preferences -->
+                        <div class="space-y-3">
+                            <label class="block text-lg font-medium text-white">Preferred Cuisines</label>
+                             <div id="cuisine-prefs-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="italian"> <span>Italian</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="mexican"> <span>Mexican</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="asian"> <span>Asian</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="mediterranean"> <span>Mediterranean</span> </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Taste Preferences -->
+                         <div class="space-y-3">
+                            <label class="block text-lg font-medium text-white">Taste Preferences</label>
+                             <div id="taste-prefs-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="tastes" value="spicy"> <span>Spicy</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="tastes" value="sweet"> <span>Sweet</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="tastes" value="savory"> <span>Savory</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="tastes" value="umami"> <span>Umami</span> </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Budget Preference -->
+                        <div class="space-y-3">
+                            <label class="block text-lg font-medium text-white">Budget</label>
+                             <div id="budget-container" class="grid grid-cols-3 gap-2">
+                                <label class="toggle-btn text-center"> <input type="radio" name="budget" value="low"> <span>Low</span> </label>
+                                <label class="toggle-btn text-center"> <input type="radio" name="budget" value="moderate" checked> <span>Moderate</span> </label>
+                                <label class="toggle-btn text-center"> <input type="radio" name="budget" value="high"> <span>High</span> </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="pt-2">
+                            <button type="submit" class="w-full primary-btn">
+                                Create a Meal
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p class="mt-4 text-gray-300">Generating your personalized meal plan...</p>
+    </div>
+
+    <!-- Loading Bar -->
+    <div class="loading-bar"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const imageUpload = document.getElementById('imageUpload');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewContainer = document.getElementById('previewContainer');
+            const processButton = document.getElementById('processButton');
+            const debugPanel = document.getElementById('debugPanel');
+            const debugContent = document.getElementById('debugContent');
+            let scannedIngredients = [];
+
+            // Handle file selection
+            imageUpload.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        previewContainer.classList.remove('hidden');
+                        processButton.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Handle drag and drop
+            const dropZone = document.querySelector('.border-dashed');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.add('border-blue-500'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.remove('border-blue-500'), false);
+            });
+
+            dropZone.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const file = dt.files[0];
+                
+                if (file && file.type.startsWith('image/')) {
+                    imageUpload.files = dt.files;
+                    const event = new Event('change');
+                    imageUpload.dispatchEvent(event);
+                }
+            }
+
+            // Process image
+            processButton.addEventListener('click', async function() {
+                const file = imageUpload.files[0];
+                if (!file) return;
+
+                try {
+                    processButton.disabled = true;
+                    processButton.textContent = 'Processing...';
+                    debugPanel.classList.remove('hidden');
+                    debugContent.innerHTML = '<div class="text-gray-400">Processing image...</div>';
+
+                    const base64Image = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.readAsDataURL(file);
+                    });
+
+                    const response = await fetch('/scan/process', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({ image: base64Image })
+                    });
+
+                    const responseText = await response.text();
+                    debugContent.innerHTML += `<div class="text-gray-400">Response status: ${response.status}</div>`;
+
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (e) {
+                        throw new Error('Invalid JSON response from server');
+                    }
+
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.error || 'Failed to process image');
+                    }
+
+                    if (!data.ingredients || data.ingredients.length === 0) {
+                        throw new Error('No ingredients detected. Please try a clearer image.');
+                    }
+
+                    scannedIngredients = data.ingredients.map(ingredient => ingredient.name);
+                    debugContent.innerHTML += `<div class="text-green-400">Successfully processed! Found ${data.ingredients.length} ingredients.</div>`;
+                    
+                    const ingredientsList = document.createElement('ul');
+                    ingredientsList.className = 'mt-2 space-y-1';
+                    data.ingredients.forEach(ingredient => {
+                        const li = document.createElement('li');
+                        li.className = 'bg-gray-800 p-2 rounded-md text-gray-300 text-xs';
+                        li.textContent = `${ingredient.name}${ingredient.quantity ? ` (${ingredient.quantity}${ingredient.unit ? ` ${ingredient.unit}` : ''})` : ''}`;
+                        ingredientsList.appendChild(li);
+                    });
+                    debugContent.appendChild(ingredientsList);
+
+                } catch (error) {
+                    debugContent.innerHTML += `<div class="text-red-400">Error: ${error.message}</div>`;
+                } finally {
+                    processButton.disabled = false;
+                    processButton.textContent = 'Process Image';
+                }
+            });
+
+            // Handle toggle button state
+            function setupToggleButtons(containerId) {
+                const container = document.getElementById(containerId);
+                if (container) {
+                    container.addEventListener('change', (e) => {
+                        const label = e.target.closest('.toggle-btn');
+                        if (label) {
+                            if (e.target.type === 'radio') {
+                                // For radio buttons, uncheck siblings
+                                const groupName = e.target.name;
+                                container.querySelectorAll(`input[name="${groupName}"]`).forEach(radio => {
+                                    radio.closest('.toggle-btn').classList.remove('checked');
+                                });
+                            }
+                            // Add/remove checked class
+                            label.classList.toggle('checked', e.target.checked);
+                        }
+                    });
+                     // Set initial state
+                    container.querySelectorAll('input:checked').forEach(input => {
+                         input.closest('.toggle-btn').classList.add('checked');
+                    });
+                }
+            }
+            
+            setupToggleButtons('meal-type-container');
+            setupToggleButtons('dietary-prefs-container');
+            setupToggleButtons('cuisine-prefs-container');
+            setupToggleButtons('taste-prefs-container');
+            setupToggleButtons('budget-container');
+
+
+            document.getElementById('demo-calculator').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                document.querySelector('.loading-overlay').classList.add('active');
+                document.querySelector('.loading-bar').classList.add('active');
+                
+                try {
+                    const formData = {
+                        calories: parseInt(document.getElementById('demo-calories').value) || 2000,
+                        protein: parseInt(document.getElementById('demo-protein').value) || 150,
+                        carbs: parseInt(document.getElementById('demo-carbs').value) || 250,
+                        fat: parseInt(document.getElementById('demo-fat').value) || 65,
+                        meal_type: Array.from(document.querySelectorAll('input[name="meal_type"]:checked')).map(cb => cb.value),
+                        preferred_cuisines: Array.from(document.querySelectorAll('input[name="cuisines"]:checked')).map(cb => cb.value),
+                        dietary_restrictions: Array.from(document.querySelectorAll('input[name="preferences"]:checked')).map(cb => cb.value),
+                        taste_preferences: Array.from(document.querySelectorAll('input[name="tastes"]:checked')).map(cb => cb.value),
+                        budget: document.querySelector('input[name="budget"]:checked')?.value || 'moderate',
+                        available_ingredients: scannedIngredients
+                    };
+
+                    if (formData.dietary_restrictions.includes('anything')) {
+                        formData.dietary_restrictions = ['anything'];
+                    }
+
+                    const response = await fetch('/generate_meal_plan', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.details || errorData.error || 'Failed to generate meal plan');
+                    }
+
+                    const data = await response.json();
+                    sessionStorage.setItem('mealPlan', JSON.stringify(data));
+                    window.location.href = '/meal_plan_results';
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert(error.message || 'Failed to generate meal plan. Please try again.');
+                } finally {
+                    document.querySelector('.loading-overlay').classList.remove('active');
+                    document.querySelector('.loading-bar').classList.remove('active');
+                }
+            });
+
+            // Auto-calculate macros based on calories
+            document.getElementById('demo-calories').addEventListener('input', function() {
+                const calories = parseFloat(this.value);
+                if (calories > 0) {
+                     const protein = Math.round((calories * 0.3) / 4); // 30% protein
+                     const carbs = Math.round((calories * 0.4) / 4);   // 40% carbs
+                     const fat = Math.round((calories * 0.3) / 9);     // 30% fat
+
+                    document.getElementById('demo-protein').value = protein;
+                    document.getElementById('demo-carbs').value = carbs;
+                    document.getElementById('demo-fat').value = fat;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

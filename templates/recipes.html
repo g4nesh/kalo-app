@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Recipes - Kalo{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Search and Filter Section -->
+    <div class="glass-card rounded-lg p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Find Recipes</h2>
+        
+        <form method="GET" action="{{ url_for('search_recipes') }}" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="meal_type" class="block text-sm font-medium text-gray-700">What would you like to make?</label>
+                    <select class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" id="meal_type" name="meal_type">
+                        <option value="">Any meal type</option>
+                        <option value="breakfast">Breakfast</option>
+                        <option value="lunch">Lunch</option>
+                        <option value="dinner">Dinner</option>
+                        <option value="snack">Snack</option>
+                        <option value="drink">Drink</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="cuisine" class="block text-sm font-medium text-gray-700">Cuisine</label>
+                    <select class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" id="cuisine" name="cuisine">
+                        <option value="">Any cuisine</option>
+                        <option value="American">American</option>
+                        <option value="Asian">Asian</option>
+                        <option value="Italian">Italian</option>
+                        <option value="Mexican">Mexican</option>
+                        <option value="International">International</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="difficulty" class="block text-sm font-medium text-gray-700">Difficulty</label>
+                    <select class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" id="difficulty" name="difficulty">
+                        <option value="">Any difficulty</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Search Recipes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Recipes Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for recipe in recipes %}
+        <div class="glass-card rounded-lg overflow-hidden">
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ recipe.name }}</h3>
+                <div class="flex items-center text-sm text-gray-600 mb-4">
+                    <span class="mr-4">{{ recipe.meal_type|title }}</span>
+                    <span>{{ recipe.cuisine }}</span>
+                </div>
+                
+                <!-- Nutrition Info -->
+                <div class="space-y-2 mb-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">Calories</span>
+                            <span class="font-medium">{{ recipe.calories }}</span>
+                        </div>
+                        <div class="nutrition-bar">
+                            <div class="nutrition-bar-fill bg-blue-500" style="width: {{ (recipe.calories / 2000) * 100 }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">Protein</span>
+                            <span class="font-medium">{{ recipe.protein }}g</span>
+                        </div>
+                        <div class="nutrition-bar">
+                            <div class="nutrition-bar-fill bg-green-500" style="width: {{ (recipe.protein / 150) * 100 }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">Carbs</span>
+                            <span class="font-medium">{{ recipe.carbs }}g</span>
+                        </div>
+                        <div class="nutrition-bar">
+                            <div class="nutrition-bar-fill bg-yellow-500" style="width: {{ (recipe.carbs / 250) * 100 }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">Fat</span>
+                            <span class="font-medium">{{ recipe.fat }}g</span>
+                        </div>
+                        <div class="nutrition-bar">
+                            <div class="nutrition-bar-fill bg-red-500" style="width: {{ (recipe.fat / 65) * 100 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tags -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    {% for tag in recipe.tags %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {{ tag }}
+                    </span>
+                    {% endfor %}
+                </div>
+                
+                <!-- Time and Difficulty -->
+                <div class="flex justify-between text-sm text-gray-600 mb-4">
+                    <span>Prep: {{ recipe.prep_time }} min</span>
+                    <span>Cook: {{ recipe.cook_time }} min</span>
+                    <span>Difficulty: {{ recipe.difficulty|title }}</span>
+                </div>
+                
+                <a href="{{ url_for('view_recipe', recipe_id=recipe.id) }}" class="block text-center bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors">
+                    View Recipe
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

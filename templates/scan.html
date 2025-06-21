@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Scan Ingredients - Kalo{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 text-white">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold mb-2">Scan Your Ingredients</h1>
+                <p class="text-gray-400">Take a photo of your ingredients to get personalized recipe recommendations</p>
+            </div>
+
+            <!-- Camera Section -->
+            <div class="glass-card rounded-lg p-6 mb-8">
+                <div class="relative">
+                    <!-- Camera Preview -->
+                    <div id="camera-preview" class="w-full aspect-video bg-gray-800 rounded-lg overflow-hidden mb-4">
+                        <video id="video" class="w-full h-full object-cover" autoplay playsinline></video>
+                        <canvas id="canvas" class="hidden"></canvas>
+                    </div>
+
+                    <!-- Camera Controls -->
+                    <div class="flex justify-center gap-4">
+                        <button id="start-camera" class="btn-primary">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Start Camera
+                        </button>
+                        <button id="capture" class="btn-primary" disabled>
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                            </svg>
+                            Capture
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detected Ingredients -->
+            <div id="detected-ingredients" class="glass-card rounded-lg p-6 mb-8 hidden">
+                <h2 class="text-xl font-bold mb-4">Detected Ingredients</h2>
+                <div id="ingredients-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Ingredients will be populated here -->
+                </div>
+            </div>
+
+            <!-- Recipe Recommendations -->
+            <div id="recipe-recommendations" class="glass-card rounded-lg p-6 hidden">
+                <h2 class="text-xl font-bold mb-4">Recipe Recommendations</h2>
+                <div id="recipes-list" class="space-y-4">
+                    <!-- Recipes will be populated here -->
+                </div>
+            </div>
+
+            <!-- Loading Overlay -->
+            <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+                    <p class="mt-4 text-white">Processing your ingredients...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let stream = null;
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const startButton = document.getElementById('start-camera');
+const captureButton = document.getElementById('capture');
+const detectedIngredients = document.getElementById('detected-ingredients');
+const ingredientsList = document.getElementById('ingredients-list');
+const recipeRecommendations = document.getElementById('recipe-recommendations');
+const recipesList = document.getElementById('recipes-list');
+const loadingOverlay = document.getElementById('loading-overlay');
+
+// Start camera
+startButton.addEventListener('click', async () => {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            } 
+        });
+        video.srcObject = stream;
+        startButton.disabled = true;
+        captureButton.disabled = false;
+    } catch (err) {
+        console.error('Error accessing camera:', err);
+        alert('Error accessing camera. Please make sure you have granted camera permissions.');
+    }
+});
+
+// Capture image
+captureButton.addEventListener('click', async () => {
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw video frame to canvas
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert canvas to base64 image
+    const imageData = canvas.toDataURL('image/jpeg');
+    
+    // Show loading overlay
+    loadingOverlay.classList.remove('hidden');
+    
+    try {
+        // Send image to server
+        const response = await fetch('/scan/process', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ image: imageData })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Display detected ingredients
+            displayIngredients(data.ingredients);
+            
+            // Get recipe recommendations
+            const recipesResponse = await fetch('/scan/recipes');
+            const recipesData = await recipesResponse.json();
+            displayRecipes(recipesData.recipes);
+        } else {
+            throw new Error(data.error || 'Failed to process image');
+        }
+    } catch (err) {
+        console.error('Error processing image:', err);
+        alert('Error processing image. Please try again.');
+    } finally {
+        loadingOverlay.classList.add('hidden');
+    }
+});
+
+function displayIngredients(ingredients) {
+    ingredientsList.innerHTML = ingredients.map(ing => `
+        <div class="glass-card rounded-lg p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-semibold">${ing.name}</h3>
+                    <p class="text-sm text-gray-400">${ing.quantity} ${ing.unit}</p>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    detectedIngredients.classList.remove('hidden');
+}
+
+function displayRecipes(recipes) {
+    recipesList.innerHTML = recipes.map(recipe => `
+        <div class="glass-card rounded-lg p-6">
+            <div class="flex items-start gap-4">
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold mb-2">${recipe.name}</h3>
+                    <div class="flex items-center gap-4 text-sm text-gray-400 mb-4">
+                        <span>${recipe.meal_type}</span>
+                        <span>•</span>
+                        <span>${recipe.cuisine}</span>
+                        <span>•</span>
+                        <span>${recipe.difficulty}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p class="text-sm text-gray-400">Calories</p>
+                            <p class="font-semibold">${recipe.calories}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400">Protein</p>
+                            <p class="font-semibold">${recipe.protein}g</p>
+                        </div>
+                    </div>
+                    <a href="/recipes/${recipe.id}" class="btn-primary inline-block">
+                        View Recipe
+                    </a>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    recipeRecommendations.classList.remove('hidden');
+}
+
+// Clean up camera stream when leaving page
+window.addEventListener('beforeunload', () => {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+});
+</script>
+
+<style>
+.glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-primary {
+    @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center;
+}
+
+.btn-primary:disabled {
+    @apply opacity-50 cursor-not-allowed;
+}
+</style>
+{% endblock %} 

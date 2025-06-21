@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Meal Recommendation - Kalo</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1a1c2e 0%, #2d1b4d 100%);
+        }
+        .recipe-card {
+            transition: transform 0.2s ease-in-out;
+        }
+        .recipe-card:hover {
+            transform: translateY(-2px);
+        }
+        .nutrition-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: #e2e8f0;
+            overflow: hidden;
+        }
+        .nutrition-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
+            transition: width 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-gray-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold mb-4">Your Personalized Meal Recommendation</h1>
+            <p class="text-gray-300 text-lg">Here's your customized meal based on your preferences</p>
+        </div>
+
+        <div id="meal-container" class="space-y-8">
+            <!-- Meal will be populated here -->
+        </div>
+
+        <div class="mt-12 text-center">
+            <a href="/" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                Get Another Recommendation
+            </a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const mealDataJson = sessionStorage.getItem('mealPlan');
+                console.log('Retrieved meal data:', mealDataJson);
+
+                if (!mealDataJson) {
+                    console.error('No meal data found in sessionStorage');
+                    window.location.href = '/';
+                    return;
+                }
+
+                const mealData = JSON.parse(mealDataJson);
+                console.log('Parsed meal data:', mealData);
+
+                if (!mealData || !mealData.recipe) {
+                    console.error('Invalid meal data structure');
+                    window.location.href = '/';
+                    return;
+                }
+
+                const container = document.getElementById('meal-container');
+                const recipe = mealData.recipe;
+                
+                const mealCard = document.createElement('div');
+                mealCard.className = 'recipe-card bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-xl p-8 shadow-xl';
+                mealCard.innerHTML = `
+                    <div class="flex flex-col md:flex-row justify-between items-start gap-6">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-4">
+                                <span class="px-3 py-1 bg-indigo-600 bg-opacity-50 rounded-full text-sm font-medium capitalize">${recipe.meal_type}</span>
+                                <span class="px-3 py-1 bg-purple-600 bg-opacity-50 rounded-full text-sm font-medium">${recipe.cuisine}</span>
+                            </div>
+                            <h2 class="text-3xl font-bold mb-2">${recipe.name}</h2>
+                            <div class="flex items-center gap-4 text-gray-300">
+                                <div class="flex items-center gap-1">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span>${recipe.prep_time + recipe.cook_time} mins</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                    <span class="capitalize">${recipe.difficulty}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 grid md:grid-cols-2 gap-8">
+                        <div class="bg-gray-700 bg-opacity-30 rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Ingredients</h3>
+                            <ul class="space-y-3">
+                                ${recipe.ingredients.map(ing => `
+                                    <li class="flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                        <span>${ing.amount} ${ing.name}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                        <div class="bg-gray-700 bg-opacity-30 rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Instructions</h3>
+                            <ol class="space-y-4">
+                                ${recipe.instructions.map((step, index) => `
+                                    <li class="flex gap-3">
+                                        <span class="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-indigo-600 rounded-full text-sm font-medium">${index + 1}</span>
+                                        <span>${step}</span>
+                                    </li>
+                                `).join('')}
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 pt-8 border-t border-gray-700">
+                        <h3 class="text-xl font-semibold mb-6">Nutrition Information</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
+                                <p class="text-sm text-gray-400 mb-1">Calories</p>
+                                <p class="text-2xl font-bold mb-2">${recipe.calories}</p>
+                                <div class="nutrition-bar">
+                                    <div class="nutrition-bar-fill" style="width: ${(recipe.calories / mealData.user_goals.calories * 100)}%"></div>
+                                </div>
+                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.calories}</p>
+                            </div>
+                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
+                                <p class="text-sm text-gray-400 mb-1">Protein</p>
+                                <p class="text-2xl font-bold mb-2">${recipe.protein}g</p>
+                                <div class="nutrition-bar">
+                                    <div class="nutrition-bar-fill" style="width: ${(recipe.protein / mealData.user_goals.protein * 100)}%"></div>
+                                </div>
+                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.protein}g</p>
+                            </div>
+                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
+                                <p class="text-sm text-gray-400 mb-1">Carbs</p>
+                                <p class="text-2xl font-bold mb-2">${recipe.carbs}g</p>
+                                <div class="nutrition-bar">
+                                    <div class="nutrition-bar-fill" style="width: ${(recipe.carbs / mealData.user_goals.carbs * 100)}%"></div>
+                                </div>
+                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.carbs}g</p>
+                            </div>
+                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
+                                <p class="text-sm text-gray-400 mb-1">Fat</p>
+                                <p class="text-2xl font-bold mb-2">${recipe.fat}g</p>
+                                <div class="nutrition-bar">
+                                    <div class="nutrition-bar-fill" style="width: ${(recipe.fat / mealData.user_goals.fat * 100)}%"></div>
+                                </div>
+                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.fat}g</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(mealCard);
+
+            } catch (error) {
+                console.error('Error displaying meal:', error);
+                alert('Error displaying meal. Please try again.');
+                window.location.href = '/';
+            }
+        });
+    </script>
+</body>
+</html> 
