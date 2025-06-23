@@ -16,7 +16,6 @@ Supabase
 opencv-python
 Numpy
 Pillow
-clarifai
 google-generativeai
 gunicorn
 certifi
