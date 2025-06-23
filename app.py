@@ -9,6 +9,7 @@ from authlib.integrations.flask_client import OAuth
 from urllib.parse import urlencode
 import psycopg2
 from psycopg2.extras import DictCursor
+import supabase_client
 import json
 from sample_data import SAMPLE_RECIPES
 from sqlalchemy import text
@@ -18,12 +19,10 @@ import numpy as np
 from PIL import Image
 import io
 import base64
-from clarifai.client.model import Model
 from collections import defaultdict
 from typing import List, Dict, Any
 from collections import Counter
 import google.generativeai as genai
-from clarifai.client.auth.helper import ClarifaiAuthHelper
 from image_analyzer import analyze_food_image
 
 # Load environment variables
@@ -35,10 +34,6 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.debug = True  # Enable debug mode
-
-# Initialize Clarifai
-CLARIFAI_PAT_TOKEN = os.getenv('CLARIFAI_PAT_TOKEN', '8e8b0902cf2a4ded9f117bb75d486f61')
-CLARIFAI_MODEL_URL = "https://clarifai.com/clarifai/main/models/food-item-recognition"
 
 # Initialize Gemini API
 GEMINI_API_KEY = "AIzaSyD92SHG5VmVHdUiQAtHVtXnS7_z6mWDKq4"
@@ -863,20 +858,35 @@ def get_scanned_ingredients():
         'scanned_at': ing.scanned_at.isoformat()
     } for ing in ingredients])
 
-@app.route('/scan/recipes')
+@app.route('/scan/recipes', methods=['GET', 'POST'])
 @login_required
 def get_recipes_from_ingredients():
-    """Get recipe recommendations based on scanned ingredients using Gemini API."""
+    """Get recipe recommendations based on scanned or manual ingredients using Gemini API."""
     try:
-        # Get user's scanned ingredients
-        user_ingredients = ScannedIngredient.query.filter_by(user_id=current_user.id).all()
-        ingredient_names = [ing.name for ing in user_ingredients]
+        ingredient_names = []
+        
+        if request.method == 'POST':
+            # Handle manual ingredients from POST request
+            data = request.get_json()
+            if data and 'ingredients' in data:
+                manual_ingredients = data['ingredients']
+                ingredient_names = [ing.get('name', '') for ing in manual_ingredients if ing.get('name')]
+            else:
+                return jsonify({
+                    'recipes': [],
+                    'available_ingredients': [],
+                    'error': 'No ingredients provided in request'
+                }), 400
+        else:
+            # Handle scanned ingredients from GET request
+            user_ingredients = ScannedIngredient.query.filter_by(user_id=current_user.id).all()
+            ingredient_names = [ing.name for ing in user_ingredients]
         
         if not ingredient_names:
             return jsonify({
                 'recipes': [],
                 'available_ingredients': [],
-                'message': 'No ingredients scanned yet. Please scan some ingredients first.'
+                'message': 'No ingredients available. Please scan or add some ingredients first.'
             })
         
         # Create prompt for Gemini API
