@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0Q22NMEDF0"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-0Q22NMEDF0');
-</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kalo - Personalized Meal Planning</title>
@@ -154,6 +146,7 @@
             <!-- Navigation -->
             <nav class="py-6 flex justify-between items-center">
                  <a href="/" class="flex-shrink-0 flex items-center">
+                    <img class="h-8 w-auto" src="{{ url_for('static', filename='img/logo.png') }}" alt="Kalo Logo">
                     <span class="ml-2 text-xl font-semibold text-white">Kalo</span>
                 </a>
                 <div class="flex items-center space-x-2">
@@ -197,6 +190,62 @@
                         <button id="processButton" class="w-full primary-btn hidden">
                             Process Image
                         </button>
+                    </div>
+
+                    <!-- Manual Ingredient Input -->
+                    <div class="form-section space-y-4">
+                        <h2 class="text-xl font-semibold text-white">Or Add Ingredients Manually</h2>
+                        <p class="text-sm text-gray-400">Type in your ingredients if you prefer not to use the camera:</p>
+                        
+                        <!-- Quick Ingredient Input -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="manual-ingredient-name" class="block text-sm font-medium text-gray-400 mb-1">Ingredient Name</label>
+                                <input type="text" id="manual-ingredient-name" placeholder="e.g., chicken breast, tomatoes, rice" 
+                                       class="form-input">
+                            </div>
+                            <div>
+                                <label for="manual-ingredient-quantity" class="block text-sm font-medium text-gray-400 mb-1">Quantity</label>
+                                <input type="text" id="manual-ingredient-quantity" placeholder="e.g., 2, 500g, 1 cup" 
+                                       class="form-input">
+                            </div>
+                            <div>
+                                <label for="manual-ingredient-unit" class="block text-sm font-medium text-gray-400 mb-1">Unit</label>
+                                <select id="manual-ingredient-unit" class="form-input">
+                                    <option value="">Select unit</option>
+                                    <option value="g">grams (g)</option>
+                                    <option value="kg">kilograms (kg)</option>
+                                    <option value="ml">milliliters (ml)</option>
+                                    <option value="l">liters (l)</option>
+                                    <option value="cup">cups</option>
+                                    <option value="tbsp">tablespoons (tbsp)</option>
+                                    <option value="tsp">teaspoons (tsp)</option>
+                                    <option value="piece">pieces</option>
+                                    <option value="slice">slices</option>
+                                    <option value="whole">whole</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-4">
+                            <button id="add-manual-ingredient" class="secondary-btn">
+                                <svg class="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Add Ingredient
+                            </button>
+                            <button id="clear-manual-ingredients" class="secondary-btn" disabled>
+                                <svg class="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                Clear All
+                            </button>
+                        </div>
+                        
+                        <!-- Manual Ingredients List -->
+                        <div id="manual-ingredients-list" class="space-y-2">
+                            <!-- Manually added ingredients will appear here -->
+                        </div>
                     </div>
                      <!-- Debug Panel -->
                     <div id="debugPanel" class="form-section hidden">
@@ -319,6 +368,15 @@
             const debugPanel = document.getElementById('debugPanel');
             const debugContent = document.getElementById('debugContent');
             let scannedIngredients = [];
+            let manualIngredients = []; // For manually added ingredients
+
+            // Manual ingredient elements
+            const manualIngredientName = document.getElementById('manual-ingredient-name');
+            const manualIngredientQuantity = document.getElementById('manual-ingredient-quantity');
+            const manualIngredientUnit = document.getElementById('manual-ingredient-unit');
+            const addManualIngredientBtn = document.getElementById('add-manual-ingredient');
+            const clearManualIngredientsBtn = document.getElementById('clear-manual-ingredients');
+            const manualIngredientsList = document.getElementById('manual-ingredients-list');
 
             // Handle file selection
             imageUpload.addEventListener('change', function(e) {
@@ -366,6 +424,128 @@
                     imageUpload.dispatchEvent(event);
                 }
             }
+
+            // Manual ingredient functionality
+            addManualIngredientBtn.addEventListener('click', addManualIngredient);
+
+            // Add Enter key support for manual ingredient addition
+            manualIngredientName.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addManualIngredient();
+                }
+            });
+
+            manualIngredientQuantity.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addManualIngredient();
+                }
+            });
+
+            manualIngredientUnit.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addManualIngredient();
+                }
+            });
+
+            // Clear all manual ingredients
+            clearManualIngredientsBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to clear all manual ingredients?')) {
+                    manualIngredients = [];
+                    updateManualIngredientsList();
+                    updateClearButton();
+                }
+            });
+
+            function addManualIngredient() {
+                const name = manualIngredientName.value.trim();
+                const quantity = manualIngredientQuantity.value.trim();
+                const unit = manualIngredientUnit.value;
+
+                if (!name) {
+                    alert('Please enter an ingredient name');
+                    manualIngredientName.focus();
+                    return;
+                }
+
+                const ingredient = {
+                    id: Date.now(),
+                    name: name,
+                    quantity: quantity || '1',
+                    unit: unit || 'piece'
+                };
+
+                manualIngredients.push(ingredient);
+                updateManualIngredientsList();
+                updateClearButton();
+                clearManualInputs();
+                
+                // Show visual feedback
+                showManualIngredientAddedFeedback();
+            }
+
+            function updateManualIngredientsList() {
+                manualIngredientsList.innerHTML = manualIngredients.map(ing => `
+                    <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <span class="font-medium text-gray-300">${ing.name}</span>
+                                <span class="text-sm text-gray-400 ml-2">${ing.quantity} ${ing.unit}</span>
+                            </div>
+                        </div>
+                        <button onclick="removeManualIngredient(${ing.id})" class="text-red-400 hover:text-red-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            function removeManualIngredient(id) {
+                manualIngredients = manualIngredients.filter(ing => ing.id !== id);
+                updateManualIngredientsList();
+                updateClearButton();
+            }
+
+            function updateClearButton() {
+                clearManualIngredientsBtn.disabled = manualIngredients.length === 0;
+            }
+
+            function clearManualInputs() {
+                manualIngredientName.value = '';
+                manualIngredientQuantity.value = '';
+                manualIngredientUnit.value = '';
+                manualIngredientName.focus();
+            }
+
+            function showManualIngredientAddedFeedback() {
+                // Add a temporary success message
+                const feedback = document.createElement('div');
+                feedback.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full';
+                feedback.textContent = 'Manual ingredient added!';
+                document.body.appendChild(feedback);
+                
+                // Animate in
+                setTimeout(() => {
+                    feedback.classList.remove('translate-x-full');
+                }, 100);
+                
+                // Animate out and remove
+                setTimeout(() => {
+                    feedback.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        document.body.removeChild(feedback);
+                    }, 300);
+                }, 2000);
+            }
+
+            // Make removeManualIngredient available globally
+            window.removeManualIngredient = removeManualIngredient;
 
             // Process image
             processButton.addEventListener('click', async function() {
@@ -468,6 +648,12 @@
                 document.querySelector('.loading-bar').classList.add('active');
                 
                 try {
+                    // Combine scanned and manual ingredients
+                    const allIngredients = [
+                        ...scannedIngredients,
+                        ...manualIngredients.map(ing => ing.name)
+                    ];
+
                     const formData = {
                         calories: parseInt(document.getElementById('demo-calories').value) || 2000,
                         protein: parseInt(document.getElementById('demo-protein').value) || 150,
@@ -478,7 +664,7 @@
                         dietary_restrictions: Array.from(document.querySelectorAll('input[name="preferences"]:checked')).map(cb => cb.value),
                         taste_preferences: Array.from(document.querySelectorAll('input[name="tastes"]:checked')).map(cb => cb.value),
                         budget: document.querySelector('input[name="budget"]:checked')?.value || 'moderate',
-                        available_ingredients: scannedIngredients
+                        available_ingredients: allIngredients
                     };
 
                     if (formData.dietary_restrictions.includes('anything')) {
