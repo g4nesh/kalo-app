@@ -55,11 +55,7 @@ google = oauth.register(
     name='google',
     client_id='503257892872-k9r84a7b3hr0mn1j6dgoje1ki82ima0s.apps.googleusercontent.com',
     client_secret='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',
-    access_token_url='https://accounts.google.com/o/oauth2/token',
-    access_token_params=None,
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    authorize_params=None,
-    api_base_url='https://www.googleapis.com/oauth2/v1/',
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'},
 )
 
