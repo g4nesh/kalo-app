@@ -107,6 +107,10 @@
             color: white;
         }
         
+        .toggle-btn.small-text span {
+            font-size: 0.9rem;
+        }
+        
         .primary-btn {
             background-color: #3B82F6;
             color: white;
@@ -146,6 +150,7 @@
             <!-- Navigation -->
             <nav class="py-6 flex justify-between items-center">
                  <a href="/" class="flex-shrink-0 flex items-center">
+                    <img class="h-8 w-auto" src="{{ url_for('static', filename='img/logo.png') }}" alt="Kalo Logo">
                     <span class="ml-2 text-xl font-semibold text-white">Kalo</span>
                 </a>
                 <div class="flex items-center space-x-2">
@@ -312,7 +317,7 @@
                                 <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="italian"> <span>Italian</span> </label>
                                 <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="mexican"> <span>Mexican</span> </label>
                                 <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="asian"> <span>Asian</span> </label>
-                                <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="mediterranean"> <span>Mediterranean</span> </label>
+                                <label class="toggle-btn text-center small-text"> <input type="checkbox" name="cuisines" value="mediterranean"> <span>Mediterranean</span> </label>
                             </div>
                         </div>
                         
