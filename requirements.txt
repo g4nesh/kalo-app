@@ -12,7 +12,7 @@ click
 itsdangerous
 Jinja2
 MarkupSafe
-Supabase
+supabase
 opencv-python
 Numpy
 Pillow
