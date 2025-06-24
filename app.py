@@ -707,8 +707,10 @@ NUTRITIONAL TARGETS:
 - Carbohydrates: {carbs}g
 - Fat: {fat}g
 """
+        macro_fields = f',\n    "calories": {calories},\n    "protein": {protein},\n    "carbs": {carbs},\n    "fat": {fat}'
     else:
         macro_text = ""
+        macro_fields = ""
     
     prompt = f"""
 You are a professional chef. Create a custom recipe for a {meal_type} meal that serves {servings} people, using the following requirements:
@@ -745,8 +747,7 @@ Return ONLY a valid JSON object with the following structure (no additional text
         "Step 2 instruction",
         "Step 3 instruction"
     ],
-    "tags": ["tag1", "tag2", "tag3"]
-    {',\n    "calories": ' + str(calories) + ',\n    "protein": ' + str(protein) + ',\n    "carbs": ' + str(carbs) + ',\n    "fat": ' + str(fat) if has_macros else ''}
+    "tags": ["tag1", "tag2", "tag3"]{macro_fields}
 }}
 
 IMPORTANT: Return ONLY the JSON object, no additional text or explanations.
