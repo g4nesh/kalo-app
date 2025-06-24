@@ -9,7 +9,6 @@ from authlib.integrations.flask_client import OAuth
 from urllib.parse import urlencode
 import psycopg2
 from psycopg2.extras import DictCursor
-import supabase_client
 import json
 from sample_data import SAMPLE_RECIPES
 from sqlalchemy import text
