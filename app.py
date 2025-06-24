@@ -53,8 +53,8 @@ oauth = OAuth(app)
 # Google OAuth setup
 google = oauth.register(
     name='google',
-    client_id=os.getenv('GOOGLE_CLIENT_ID'),
-    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+    client_id='503257892872-k9r84a7b3hr0mn1j6dgoje1ki82ima0s.apps.googleusercontent.com',
+    client_secret='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',
     access_token_url='https://accounts.google.com/o/oauth2/token',
     access_token_params=None,
     authorize_url='https://accounts.google.com/o/oauth2/auth',
@@ -66,8 +66,8 @@ google = oauth.register(
 # GitHub OAuth setup
 github = oauth.register(
     name='github',
-    client_id=os.getenv('GITHUB_CLIENT_ID'),
-    client_secret=os.getenv('GITHUB_CLIENT_SECRET'),
+    client_id='Ov23liS7grVosk5dYHmq',
+    client_secret='9f41475c938e80a359f68dfa1827157d1d8309f5',
     access_token_url='https://github.com/login/oauth/access_token',
     access_token_params=None,
     authorize_url='https://github.com/login/oauth/authorize',
