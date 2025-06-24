@@ -70,6 +70,55 @@
                 const container = document.getElementById('meal-container');
                 const recipe = mealData.recipe;
                 
+                // Nutrition info HTML (conditionally rendered)
+                let nutritionHTML = '';
+                if (
+                    typeof recipe.calories !== 'undefined' &&
+                    typeof recipe.protein !== 'undefined' &&
+                    typeof recipe.carbs !== 'undefined' &&
+                    typeof recipe.fat !== 'undefined'
+                ) {
+                    nutritionHTML = `
+                    <div class="mt-8 pt-8 border-t border-gray-700">
+                        <h3 class="text-xl font-semibold mb-6">Nutrition Information</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
+                                <p class="text-sm text-gray-400 mb-1">Calories</p>
+                                <p class="text-2xl font-bold mb-2">${recipe.calories}</p>
+                                <div class="nutrition-bar">
+                                    <div class="nutrition-bar-fill" style="width: ${(recipe.calories / (mealData.user_goals.calories || recipe.calories) * 100)}%"></div>
+                                </div>
+                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.calories || '-'}</p>
+                            </div>
+                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
+                                <p class="text-sm text-gray-400 mb-1">Protein</p>
+                                <p class="text-2xl font-bold mb-2">${recipe.protein}g</p>
+                                <div class="nutrition-bar">
+                                    <div class="nutrition-bar-fill" style="width: ${(recipe.protein / (mealData.user_goals.protein || recipe.protein) * 100)}%"></div>
+                                </div>
+                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.protein || '-'}</p>
+                            </div>
+                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
+                                <p class="text-sm text-gray-400 mb-1">Carbs</p>
+                                <p class="text-2xl font-bold mb-2">${recipe.carbs}g</p>
+                                <div class="nutrition-bar">
+                                    <div class="nutrition-bar-fill" style="width: ${(recipe.carbs / (mealData.user_goals.carbs || recipe.carbs) * 100)}%"></div>
+                                </div>
+                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.carbs || '-'}</p>
+                            </div>
+                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
+                                <p class="text-sm text-gray-400 mb-1">Fat</p>
+                                <p class="text-2xl font-bold mb-2">${recipe.fat}g</p>
+                                <div class="nutrition-bar">
+                                    <div class="nutrition-bar-fill" style="width: ${(recipe.fat / (mealData.user_goals.fat || recipe.fat) * 100)}%"></div>
+                                </div>
+                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.fat || '-'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }
+                
                 const mealCard = document.createElement('div');
                 mealCard.className = 'recipe-card bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-xl p-8 shadow-xl';
                 mealCard.innerHTML = `
@@ -123,44 +172,7 @@
                             </ol>
                         </div>
                     </div>
-                    
-                    <div class="mt-8 pt-8 border-t border-gray-700">
-                        <h3 class="text-xl font-semibold mb-6">Nutrition Information</h3>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
-                                <p class="text-sm text-gray-400 mb-1">Calories</p>
-                                <p class="text-2xl font-bold mb-2">${recipe.calories}</p>
-                                <div class="nutrition-bar">
-                                    <div class="nutrition-bar-fill" style="width: ${(recipe.calories / mealData.user_goals.calories * 100)}%"></div>
-                                </div>
-                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.calories}</p>
-                            </div>
-                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
-                                <p class="text-sm text-gray-400 mb-1">Protein</p>
-                                <p class="text-2xl font-bold mb-2">${recipe.protein}g</p>
-                                <div class="nutrition-bar">
-                                    <div class="nutrition-bar-fill" style="width: ${(recipe.protein / mealData.user_goals.protein * 100)}%"></div>
-                                </div>
-                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.protein}g</p>
-                            </div>
-                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
-                                <p class="text-sm text-gray-400 mb-1">Carbs</p>
-                                <p class="text-2xl font-bold mb-2">${recipe.carbs}g</p>
-                                <div class="nutrition-bar">
-                                    <div class="nutrition-bar-fill" style="width: ${(recipe.carbs / mealData.user_goals.carbs * 100)}%"></div>
-                                </div>
-                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.carbs}g</p>
-                            </div>
-                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
-                                <p class="text-sm text-gray-400 mb-1">Fat</p>
-                                <p class="text-2xl font-bold mb-2">${recipe.fat}g</p>
-                                <div class="nutrition-bar">
-                                    <div class="nutrition-bar-fill" style="width: ${(recipe.fat / mealData.user_goals.fat * 100)}%"></div>
-                                </div>
-                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.fat}g</p>
-                            </div>
-                        </div>
-                    </div>
+                    ${nutritionHTML}
                 `;
                 container.appendChild(mealCard);
 
