@@ -185,16 +185,22 @@ def init_db():
 init_db()
 
 # Routes
+@app.route('/auth')
+def auth():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    return render_template('auth.html')
+
 @app.route('/')
 def index():
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth'))
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('index'))
     
     if request.method == 'POST':
         email = request.form.get('email')
@@ -204,7 +210,7 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             next_page = request.args.get('next')
-            return redirect(next_page or url_for('dashboard'))
+            return redirect(next_page or url_for('index'))
         
         flash('Invalid email or password', 'error')
     
@@ -219,7 +225,7 @@ def logout():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('index'))
     
     if request.method == 'POST':
         email = request.form.get('email')
@@ -236,7 +242,7 @@ def register():
         db.session.commit()
         
         login_user(user)
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('index'))
     
     return render_template('register.html')
 
@@ -258,7 +264,7 @@ def update_macros():
     
     db.session.commit()
     flash('Macronutrient goals updated successfully!', 'success')
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('index'))
 
 @app.route('/update_preferences', methods=['POST'])
 @login_required
@@ -273,7 +279,7 @@ def update_preferences():
     
     db.session.commit()
     flash('Preferences updated successfully!', 'success')
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('index'))
 
 # Recipe routes
 @app.route('/recipes')
@@ -367,7 +373,7 @@ def google_authorize():
             db.session.commit()
         
         login_user(user)
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('index'))
     except Exception as e:
         print(f"Google authorize error: {str(e)}")  # Debug log
         flash('Error authenticating with Google. Please try again.', 'error')
@@ -411,7 +417,7 @@ def github_authorize():
             db.session.commit()
         
         login_user(user)
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('index'))
     except Exception as e:
         print(f"GitHub authorize error: {str(e)}")  # Debug log
         flash('Error authenticating with GitHub. Please try again.', 'error')
@@ -550,6 +556,7 @@ def compare_preferences():
     })
 
 @app.route('/generate_meal_plan', methods=['POST'])
+@login_required
 def generate_meal_plan():
     """Generate a custom recipe using Gemini API based on user preferences and available ingredients."""
     try:
@@ -572,7 +579,7 @@ def generate_meal_plan():
             }), 400
 
         # Validate required fields
-        required_fields = ['calories', 'protein', 'carbs', 'fat', 'meal_type']
+        required_fields = ['servings', 'meal_type']
         missing_fields = [field for field in required_fields if field not in user_preferences]
         
         if missing_fields:
@@ -581,6 +588,18 @@ def generate_meal_plan():
                 'error': 'Missing required fields',
                 'details': f'Please provide values for: {", ".join(missing_fields)}'
             }), 400
+
+        # If macro tracking is enabled, validate those fields if present
+        macro_fields = ['calories', 'protein', 'carbs', 'fat']
+        has_macros = all(field in user_preferences for field in macro_fields)
+        if has_macros:
+            for field in macro_fields:
+                if not isinstance(user_preferences[field], (int, float)):
+                    print(f"Error: Macro field {field} is not a number")
+                    return jsonify({
+                        'error': f'Invalid macro value for {field}',
+                        'details': f'{field} must be a number.'
+                    }), 400
 
         # Get available ingredients from the request. This is now a mandatory field.
         available_ingredients = user_preferences.get('available_ingredients', [])
@@ -596,7 +615,7 @@ def generate_meal_plan():
         print(f"Using ONLY scanned ingredients for recipe generation: {available_ingredients}")
 
         # Create prompt for Gemini API
-        prompt = create_recipe_prompt(user_preferences, available_ingredients)
+        prompt = create_recipe_prompt(user_preferences, available_ingredients, has_macros)
         
         print("\n=== Sending to Gemini API ===")
         print(f"Prompt: {prompt}")
@@ -620,12 +639,16 @@ def generate_meal_plan():
         response_data = {
             'recipe': recipe_data,
             'user_goals': {
+                'servings': user_preferences['servings']
+            }
+        }
+        if has_macros:
+            response_data['user_goals'].update({
                 'calories': user_preferences['calories'],
                 'protein': user_preferences['protein'],
                 'carbs': user_preferences['carbs'],
                 'fat': user_preferences['fat']
-            }
-        }
+            })
         
         print("\n=== Sending Response ===")
         print(json.dumps(response_data, indent=2))
@@ -644,14 +667,10 @@ def generate_meal_plan():
             'traceback': error_details
         }), 500
 
-def create_recipe_prompt(user_preferences: Dict[str, Any], available_ingredients: List[str]) -> str:
-    """Create a detailed prompt for the Gemini API to generate a custom recipe."""
-    
+def create_recipe_prompt(user_preferences: dict, available_ingredients: list, has_macros: bool) -> str:
+    """Create a detailed prompt for the Gemini API to generate a custom recipe based on servings and optionally macros."""
     meal_type = user_preferences['meal_type']
-    calories = user_preferences['calories']
-    protein = user_preferences['protein']
-    carbs = user_preferences['carbs']
-    fat = user_preferences['fat']
+    servings = user_preferences['servings']
     
     # Build dietary restrictions text
     dietary_restrictions = user_preferences.get('dietary_restrictions', [])
@@ -675,17 +694,26 @@ def create_recipe_prompt(user_preferences: Dict[str, Any], available_ingredients
     cooking_time = user_preferences.get('cooking_time', '30')
     difficulty = user_preferences.get('difficulty', 'medium')
     cooking_text = f"Cooking time: {cooking_time} minutes. Difficulty level: {difficulty}. "
-    
-    prompt = f"""
-You are a professional chef and nutritionist. Create a custom recipe for a {meal_type} meal that meets the following requirements:
 
+    if has_macros:
+        calories = user_preferences['calories']
+        protein = user_preferences['protein']
+        carbs = user_preferences['carbs']
+        fat = user_preferences['fat']
+        macro_text = f"""
 NUTRITIONAL TARGETS:
 - Calories: {calories} kcal
 - Protein: {protein}g
 - Carbohydrates: {carbs}g
 - Fat: {fat}g
+"""
+    else:
+        macro_text = ""
+    
+    prompt = f"""
+You are a professional chef. Create a custom recipe for a {meal_type} meal that serves {servings} people, using the following requirements:
 
-{dietary_text}{cuisine_text}{taste_text}{cooking_text}
+{macro_text}{dietary_text}{cuisine_text}{taste_text}{cooking_text}
 
 AVAILABLE INGREDIENTS:
 {', '.join(available_ingredients)}
@@ -693,10 +721,10 @@ AVAILABLE INGREDIENTS:
 INSTRUCTIONS:
 1. Create a recipe that uses primarily the available ingredients listed above
 2. You may suggest 2-3 additional common ingredients if needed for the recipe
-3. Ensure the recipe meets the nutritional targets as closely as possible
-4. Make the recipe appropriate for the specified meal type
-5. Consider the dietary restrictions, cuisine preferences, and taste preferences
-6. Keep the cooking time and difficulty level appropriate
+3. Make the recipe appropriate for the specified meal type and number of servings
+4. Consider the dietary restrictions, cuisine preferences, and taste preferences
+5. Keep the cooking time and difficulty level appropriate
+6. If nutritional targets are provided, try to match them as closely as possible
 
 RESPONSE FORMAT:
 Return ONLY a valid JSON object with the following structure (no additional text):
@@ -705,13 +733,9 @@ Return ONLY a valid JSON object with the following structure (no additional text
     "name": "Recipe Name",
     "meal_type": "{meal_type}",
     "cuisine": "Cuisine Type",
-    "calories": {calories},
-    "protein": {protein},
-    "carbs": {carbs},
-    "fat": {fat},
+    "servings": {servings},
     "prep_time": 15,
     "cook_time": 20,
-    "servings": 1,
     "difficulty": "{difficulty}",
     "ingredients": [
         {{"name": "ingredient name", "amount": "quantity with unit"}}
@@ -722,15 +746,16 @@ Return ONLY a valid JSON object with the following structure (no additional text
         "Step 3 instruction"
     ],
     "tags": ["tag1", "tag2", "tag3"]
+    {',\n    "calories": ' + str(calories) + ',\n    "protein": ' + str(protein) + ',\n    "carbs": ' + str(carbs) + ',\n    "fat": ' + str(fat) if has_macros else ''}
 }}
 
 IMPORTANT: Return ONLY the JSON object, no additional text or explanations.
 """
-    
     return prompt
 
 def parse_recipe_response(response_text: str) -> Dict[str, Any]:
     """Parse the Gemini API response to extract recipe data."""
+    import re
     try:
         # Clean the response text
         cleaned_text = response_text.strip()
@@ -743,14 +768,24 @@ def parse_recipe_response(response_text: str) -> Dict[str, Any]:
         
         cleaned_text = cleaned_text.strip()
         
+        # Remove trailing commas before } or ]
+        cleaned_text = re.sub(r',\s*([}\]])', r'\1', cleaned_text)
+        
         # Parse JSON
         recipe_data = json.loads(cleaned_text)
         
         # Validate required fields
-        required_fields = ['name', 'meal_type', 'calories', 'protein', 'carbs', 'fat', 'ingredients', 'instructions']
-        for field in required_fields:
+        always_required = ['name', 'meal_type', 'ingredients', 'instructions']
+        for field in always_required:
             if field not in recipe_data:
                 raise ValueError(f"Missing required field: {field}")
+        # Only require macros if present in the response
+        macro_fields = ['calories', 'protein', 'carbs', 'fat']
+        macros_present = any(field in recipe_data for field in macro_fields)
+        if macros_present:
+            for field in macro_fields:
+                if field not in recipe_data:
+                    raise ValueError(f"Missing required field: {field}")
         
         # Ensure ingredients and instructions are lists
         if not isinstance(recipe_data['ingredients'], list):
@@ -1060,6 +1095,10 @@ def parse_recipes_response(response_text: str) -> List[Dict[str, Any]]:
     except Exception as e:
         print(f"Error parsing recipes response: {e}")
         return []
+
+@app.route('/check_login')
+def check_login():
+    return jsonify({'logged_in': current_user.is_authenticated})
 
 if __name__ == '__main__':
     with app.app_context():
