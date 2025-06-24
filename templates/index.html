@@ -264,27 +264,41 @@
                         Generate Your Meal Plan
                     </h2>
                     <form id="demo-calculator" class="space-y-6">
-                        <!-- Nutritional Goals -->
+                        <!-- Macro Tracking Toggle -->
                         <div class="space-y-3">
-                             <label class="block text-lg font-medium text-white">Nutritional Goals</label>
-                             <div class="grid grid-cols-2 gap-4">
+                            <label class="block text-lg font-medium text-white">Specific Macro Tracking?</label>
+                            <div class="flex gap-4">
+                                <label class="toggle-btn text-center" id="macro-yes-label"> <input type="radio" name="macro_tracking" value="yes"> <span>Yes</span> </label>
+                                <label class="toggle-btn text-center checked" id="macro-no-label"> <input type="radio" name="macro_tracking" value="no" checked> <span>No</span> </label>
+                            </div>
+                        </div>
+
+                        <!-- Macro Inputs (hidden by default) -->
+                        <div id="macro-fields" class="space-y-3 hidden">
+                            <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label for="demo-calories" class="block text-sm font-medium text-gray-400 mb-1">Calories (kcal)</label>
                                     <input type="number" id="demo-calories" name="calories" class="form-input" placeholder="2000">
                                 </div>
-                                 <div>
+                                <div>
                                     <label for="demo-protein" class="block text-sm font-medium text-gray-400 mb-1">Protein (g)</label>
                                     <input type="number" id="demo-protein" name="protein" class="form-input" placeholder="150">
                                 </div>
-                                 <div>
+                                <div>
                                     <label for="demo-carbs" class="block text-sm font-medium text-gray-400 mb-1">Carbs (g)</label>
                                     <input type="number" id="demo-carbs" name="carbs" class="form-input" placeholder="250">
                                 </div>
-                                 <div>
+                                <div>
                                     <label for="demo-fat" class="block text-sm font-medium text-gray-400 mb-1">Fat (g)</label>
                                     <input type="number" id="demo-fat" name="fat" class="form-input" placeholder="65">
                                 </div>
-                             </div>
+                            </div>
+                        </div>
+
+                        <!-- Number of Servings -->
+                        <div class="space-y-3">
+                            <label for="demo-servings" class="block text-lg font-medium text-white">Number of Servings</label>
+                            <input type="number" id="demo-servings" name="servings" class="form-input" placeholder="e.g., 4" min="1" value="4">
                         </div>
 
                         <!-- Meal Type -->
@@ -362,6 +376,24 @@
 
     <!-- Loading Bar -->
     <div class="loading-bar"></div>
+
+    <!-- Login Required Modal -->
+    <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden">
+        <div class="bg-gray-900 rounded-lg p-8 max-w-sm w-full text-center shadow-2xl">
+            <h2 class="text-2xl font-bold mb-4 text-white">Sign in Required</h2>
+            <p class="mb-6 text-gray-300">Please sign in with Google or GitHub to generate your personalized meal plan.</p>
+            <div class="flex flex-col gap-4">
+                <a href="/login/google" class="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+                    Sign in with Google
+                </a>
+                <a href="/login/github" class="w-full inline-flex items-center justify-center px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.164 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+                    Sign in with GitHub
+                </a>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -644,6 +676,50 @@
             setupToggleButtons('taste-prefs-container');
             setupToggleButtons('budget-container');
 
+            // Macro tracking toggle logic
+            const macroFields = document.getElementById('macro-fields');
+            const macroYesLabel = document.getElementById('macro-yes-label');
+            const macroNoLabel = document.getElementById('macro-no-label');
+            const macroTrackingRadios = document.getElementsByName('macro_tracking');
+
+            function updateMacroFieldsVisibility() {
+                const isMacro = document.querySelector('input[name="macro_tracking"]:checked').value === 'yes';
+                macroFields.classList.toggle('hidden', !isMacro);
+                macroYesLabel.classList.toggle('checked', isMacro);
+                macroNoLabel.classList.toggle('checked', !isMacro);
+            }
+
+            macroTrackingRadios.forEach(radio => {
+                radio.addEventListener('change', updateMacroFieldsVisibility);
+            });
+            updateMacroFieldsVisibility();
+
+            // Intercept form submit to check login status
+            const demoForm = document.getElementById('demo-calculator');
+            const loginModal = document.getElementById('loginModal');
+            let allowSubmit = false;
+            demoForm.addEventListener('submit', async function(e) {
+                if (allowSubmit) {
+                    allowSubmit = false; // reset for next submit
+                    return; // let the form submit as normal
+                }
+                e.preventDefault();
+                // Check login status
+                const resp = await fetch('/check_login', { credentials: 'same-origin' });
+                const data = await resp.json();
+                if (!data.logged_in) {
+                    loginModal.classList.remove('hidden');
+                    return;
+                }
+                allowSubmit = true;
+                demoForm.requestSubmit();
+            });
+            // Hide modal on click outside
+            loginModal.addEventListener('click', function(e) {
+                if (e.target === loginModal) {
+                    loginModal.classList.add('hidden');
+                }
+            });
 
             document.getElementById('demo-calculator').addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -658,11 +734,9 @@
                         ...manualIngredients.map(ing => ing.name)
                     ];
 
-                    const formData = {
-                        calories: parseInt(document.getElementById('demo-calories').value) || 2000,
-                        protein: parseInt(document.getElementById('demo-protein').value) || 150,
-                        carbs: parseInt(document.getElementById('demo-carbs').value) || 250,
-                        fat: parseInt(document.getElementById('demo-fat').value) || 65,
+                    const isMacroTracking = document.querySelector('input[name="macro_tracking"]:checked').value === 'yes';
+                    let formData = {
+                        servings: parseInt(document.getElementById('demo-servings').value) || 4,
                         meal_type: Array.from(document.querySelectorAll('input[name="meal_type"]:checked')).map(cb => cb.value),
                         preferred_cuisines: Array.from(document.querySelectorAll('input[name="cuisines"]:checked')).map(cb => cb.value),
                         dietary_restrictions: Array.from(document.querySelectorAll('input[name="preferences"]:checked')).map(cb => cb.value),
@@ -673,6 +747,13 @@
 
                     if (formData.dietary_restrictions.includes('anything')) {
                         formData.dietary_restrictions = ['anything'];
+                    }
+
+                    if (isMacroTracking) {
+                        formData.calories = parseInt(document.getElementById('demo-calories').value) || 2000;
+                        formData.protein = parseInt(document.getElementById('demo-protein').value) || 150;
+                        formData.carbs = parseInt(document.getElementById('demo-carbs').value) || 250;
+                        formData.fat = parseInt(document.getElementById('demo-fat').value) || 65;
                     }
 
                     const response = await fetch('/generate_meal_plan', {
