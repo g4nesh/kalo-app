@@ -50,15 +50,6 @@ login_manager.login_view = 'login'
 # Initialize OAuth
 oauth = OAuth(app)
 
-# Google OAuth setup
-google = oauth.register(
-    name='google',
-    client_id='503257892872-k9r84a7b3hr0mn1j6dgoje1ki82ima0s.apps.googleusercontent.com',
-    client_secret='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',
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={'scope': 'openid email profile'},
-)
-
 # GitHub OAuth setup
 github = oauth.register(
     name='github',
@@ -70,6 +61,17 @@ github = oauth.register(
     authorize_params=None,
     api_base_url='https://api.github.com/',
     client_kwargs={'scope': 'user:email'},
+)
+
+# Google OAuth setup
+google = oauth.register(
+    name='google',
+    client_id='your-google-client-id',
+    client_secret='your-google-client-secret',
+    server_metadata_url='https://accounts.google.com/.well-known/openid_configuration',
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
 )
 
 # User model
@@ -339,42 +341,6 @@ def filter_recipes():
     return render_template('recipes.html', recipes=recipes)
 
 # OAuth routes
-@app.route('/login/google')
-def google_login():
-    try:
-        redirect_uri = url_for('google_authorize', _external=True)
-        print(f"Google OAuth redirect URI: {redirect_uri}")  # Debug log
-        return google.authorize_redirect(redirect_uri)
-    except Exception as e:
-        print(f"Google login error: {str(e)}")  # Debug log
-        flash('Error connecting to Google. Please try again.', 'error')
-        return redirect(url_for('login'))
-
-@app.route('/login/google/authorize')
-def google_authorize():
-    try:
-        token = google.authorize_access_token()
-        resp = google.get('userinfo')
-        user_info = resp.json()
-        
-        # Check if user exists
-        user = User.query.filter_by(email=user_info['email']).first()
-        if not user:
-            # Create new user
-            user = User(
-                email=user_info['email'],
-                name=user_info.get('name', user_info['email'].split('@')[0])
-            )
-            db.session.add(user)
-            db.session.commit()
-        
-        login_user(user)
-        return redirect(url_for('index'))
-    except Exception as e:
-        print(f"Google authorize error: {str(e)}")  # Debug log
-        flash('Error authenticating with Google. Please try again.', 'error')
-        return redirect(url_for('login'))
-
 @app.route('/login/github')
 def github_login():
     try:
@@ -418,6 +384,75 @@ def github_authorize():
         print(f"GitHub authorize error: {str(e)}")  # Debug log
         flash('Error authenticating with GitHub. Please try again.', 'error')
         return redirect(url_for('login'))
+
+@app.route('/login/google')
+def google_login():
+    try:
+        redirect_uri = url_for('google_authorize', _external=True)
+        print(f"Google OAuth redirect URI: {redirect_uri}")  # Debug log
+        return google.authorize_redirect(redirect_uri)
+    except Exception as e:
+        print(f"Google login error: {str(e)}")  # Debug log
+        flash('Error connecting to Google. Please try again.', 'error')
+        return redirect(url_for('login'))
+
+@app.route('/login/google/authorize')
+def google_authorize():
+    try:
+        token = google.authorize_access_token()
+        resp = google.get('userinfo')
+        user_info = resp.json()
+        
+        email = user_info.get('email')
+        if not email:
+            flash('Could not get email from Google', 'error')
+            return redirect(url_for('login'))
+        
+        # Check if user exists
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            # Create new user
+            user = User(
+                email=email,
+                name=user_info.get('name', user_info.get('given_name', 'User'))
+            )
+            db.session.add(user)
+            db.session.commit()
+        
+        login_user(user)
+        return redirect(url_for('index'))
+    except Exception as e:
+        print(f"Google authorize error: {str(e)}")  # Debug log
+        flash('Error authenticating with Google. Please try again.', 'error')
+        return redirect(url_for('login'))
+
+@app.route('/guest_login')
+def guest_login():
+    """Create a temporary guest user and log them in."""
+    try:
+        # Create a unique guest email
+        import uuid
+        guest_id = str(uuid.uuid4())[:8]
+        guest_email = f"guest_{guest_id}@kalo.app"
+        
+        # Check if guest user already exists (shouldn't happen with UUID, but just in case)
+        user = User.query.filter_by(email=guest_email).first()
+        if not user:
+            # Create new guest user
+            user = User(
+                email=guest_email,
+                name=f"Guest User {guest_id}"
+            )
+            db.session.add(user)
+            db.session.commit()
+        
+        login_user(user)
+        flash('Welcome! You are now signed in as a guest.', 'success')
+        return redirect(url_for('index'))
+    except Exception as e:
+        print(f"Guest login error: {str(e)}")  # Debug log
+        flash('Error creating guest account. Please try again.', 'error')
+        return redirect(url_for('auth'))
 
 @app.route('/recommendations')
 @login_required
