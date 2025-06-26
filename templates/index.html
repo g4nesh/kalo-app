@@ -320,6 +320,9 @@
                                 <label class="toggle-btn text-center"> <input type="checkbox" name="preferences" value="vegan"> <span>Vegan</span> </label>
                                 <label class="toggle-btn text-center"> <input type="checkbox" name="preferences" value="gluten-free"> <span>Gluten-Free</span> </label>
                                 <label class="toggle-btn text-center"> <input type="checkbox" name="preferences" value="dairy-free"> <span>Dairy-Free</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="preferences" value="keto"> <span>Keto</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="preferences" value="paleo"> <span>Paleo</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="preferences" value="low-carb"> <span>Low-Carb</span> </label>
                             </div>
                         </div>
                         
@@ -329,8 +332,12 @@
                              <div id="cuisine-prefs-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="italian"> <span>Italian</span> </label>
                                 <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="mexican"> <span>Mexican</span> </label>
-                                <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="asian"> <span>Asian</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="asian"> <span>Chinese</span> </label>
                                 <label class="toggle-btn text-center small-text"> <input type="checkbox" name="cuisines" value="mediterranean"> <span>Mediterranean</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="indian"> <span>Indian</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="thai"> <span>Thai</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="japanese"> <span>Japanese</span> </label>
+                                <label class="toggle-btn text-center"> <input type="checkbox" name="cuisines" value="american"> <span>American</span> </label>
                             </div>
                         </div>
                         
@@ -352,6 +359,16 @@
                                 <label class="toggle-btn text-center"> <input type="radio" name="budget" value="low"> <span>Low</span> </label>
                                 <label class="toggle-btn text-center"> <input type="radio" name="budget" value="moderate" checked> <span>Moderate</span> </label>
                                 <label class="toggle-btn text-center"> <input type="radio" name="budget" value="high"> <span>High</span> </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Difficulty Preference -->
+                        <div class="space-y-3">
+                            <label class="block text-lg font-medium text-white">Cooking Difficulty</label>
+                             <div id="difficulty-container" class="grid grid-cols-3 gap-2">
+                                <label class="toggle-btn text-center"> <input type="radio" name="difficulty" value="easy"> <span>Easy</span> </label>
+                                <label class="toggle-btn text-center"> <input type="radio" name="difficulty" value="medium" checked> <span>Medium</span> </label>
+                                <label class="toggle-btn text-center"> <input type="radio" name="difficulty" value="hard"> <span>Hard</span> </label>
                             </div>
                         </div>
                         
@@ -674,6 +691,7 @@
             setupToggleButtons('cuisine-prefs-container');
             setupToggleButtons('taste-prefs-container');
             setupToggleButtons('budget-container');
+            setupToggleButtons('difficulty-container');
 
             // Macro tracking toggle logic
             const macroFields = document.getElementById('macro-fields');
@@ -741,6 +759,7 @@
                         dietary_restrictions: Array.from(document.querySelectorAll('input[name="preferences"]:checked')).map(cb => cb.value),
                         taste_preferences: Array.from(document.querySelectorAll('input[name="tastes"]:checked')).map(cb => cb.value),
                         budget: document.querySelector('input[name="budget"]:checked')?.value || 'moderate',
+                        difficulty: document.querySelector('input[name="difficulty"]:checked')?.value || 'medium',
                         available_ingredients: allIngredients
                     };
 
