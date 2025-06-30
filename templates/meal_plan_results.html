@@ -5,182 +5,226 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Meal Recommendation - Kalo</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #1a1c2e 0%, #2d1b4d 100%);
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1a1a1a 100%);
+            font-family: 'Inter', 'Segoe UI', 'Roboto', 'system-ui', sans-serif;
         }
-        .recipe-card {
-            transition: transform 0.2s ease-in-out;
+        .meal-card {
+            background: #1e293b;
+            border: 1.5px solid #374151;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 32px 0 rgba(16, 24, 40, 0.25);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
         }
-        .recipe-card:hover {
-            transform: translateY(-2px);
+        .meal-title {
+            color: #f7fafc;
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            margin-bottom: 0.5rem;
+            font-family: 'Inter', 'Segoe UI', 'Roboto', 'system-ui', sans-serif;
         }
-        .nutrition-bar {
-            height: 4px;
-            border-radius: 2px;
-            background: #e2e8f0;
-            overflow: hidden;
+        .subtitle {
+            color: #9ca3af;
+            font-size: 1.15rem;
+            margin-bottom: 2rem;
+            font-weight: 500;
         }
-        .nutrition-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
-            transition: width 0.3s ease-in-out;
+        .tag {
+            display: inline-block;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: 9999px;
+            padding: 0.25rem 1rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Inter', 'Segoe UI', 'Roboto', 'system-ui', sans-serif;
+        }
+        .tag-vegetarian { background: #8b5cf6; color: #fff; }
+        .tag-vegan { background: #65a30d; color: #fff; }
+        .tag-glutenfree { background: #eab308; color: #fff; }
+        .tag-default { background: #334155; color: #fff; }
+        .info-label {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #d1d5db;
+            font-family: 'Inter', 'Segoe UI', 'Roboto', 'system-ui', sans-serif;
+        }
+        .info-value {
+            font-size: 1.08rem;
+            font-weight: 700;
+        }
+        .prep-time { color: #fbbf24; }
+        .cook-time { color: #ff6b6b; }
+        .servings { color: #3b82f6; }
+        .nutrition-label { color: #9ca3af; font-size: 0.95rem; font-weight: 500; }
+        .nutrition-value { font-weight: 700; font-size: 1.08rem; }
+        .calories { color: #f97316; }
+        .protein { color: #a855f7; }
+        .carbs { color: #3b82f6; }
+        .fat { color: #14b8a6; }
+        .ingredient-list {
+            color: #d1d5db;
+            font-size: 1.05rem;
+            font-family: 'Inter', 'Segoe UI', 'Roboto', 'system-ui', sans-serif;
+        }
+        .ingredient-check {
+            accent-color: #84cc16;
+            margin-right: 0.5rem;
+        }
+        .instructions-list {
+            color: #f7fafc;
+            font-size: 1.05rem;
+            font-family: 'Inter', 'Segoe UI', 'Roboto', 'system-ui', sans-serif;
+        }
+        .meal-section-title {
+            color: #f7fafc;
+            font-size: 1.18rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-family: 'Inter', 'Segoe UI', 'Roboto', 'system-ui', sans-serif;
+        }
+        .nutrition-box {
+            background: #262626;
+            border-radius: 0.75rem;
+            padding: 1.25rem 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .nutrition-row {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .meal-tags {
+            margin-bottom: 1.5rem;
         }
     </style>
 </head>
-<body class="gradient-bg min-h-screen text-gray-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+<body class="min-h-screen text-gray-100">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold mb-4">Your Personalized Meal Recommendation</h1>
-            <p class="text-gray-300 text-lg">Here's your customized meal based on your preferences</p>
+            <h1 class="meal-title">Your Personalized Meal Recommendation</h1>
+            <p class="subtitle">Here's your customized meal based on your preferences</p>
         </div>
-
-        <div id="meal-container" class="space-y-8">
-            <!-- Meal will be populated here -->
-        </div>
-
+        <div id="meal-container"></div>
         <div class="mt-12 text-center">
-            <a href="/" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+            <a href="/" class="inline-flex items-center px-8 py-3 bg-[#262626] border border-[#374151] rounded-xl shadow-lg font-bold text-lg text-white hover:bg-[#374151] transition-colors duration-200">
                 Get Another Recommendation
             </a>
         </div>
     </div>
-
     <script>
+        function getTagClass(tag) {
+            if (!tag) return 'tag tag-default';
+            const t = tag.toLowerCase();
+            if (t.includes('vegetarian')) return 'tag tag-vegetarian';
+            if (t.includes('vegan')) return 'tag tag-vegan';
+            if (t.includes('gluten')) return 'tag tag-glutenfree';
+            return 'tag tag-default';
+        }
         document.addEventListener('DOMContentLoaded', function() {
-            try {
-                const mealDataJson = sessionStorage.getItem('mealPlan');
-                console.log('Retrieved meal data:', mealDataJson);
-
-                if (!mealDataJson) {
-                    console.error('No meal data found in sessionStorage');
-                    window.location.href = '/';
-                    return;
-                }
-
-                const mealData = JSON.parse(mealDataJson);
-                console.log('Parsed meal data:', mealData);
-
-                if (!mealData || !mealData.recipe) {
-                    console.error('Invalid meal data structure');
-                    window.location.href = '/';
-                    return;
-                }
-
-                const container = document.getElementById('meal-container');
-                const recipe = mealData.recipe;
-                
-                // Nutrition info HTML (conditionally rendered)
-                let nutritionHTML = '';
-                if (
-                    typeof recipe.calories !== 'undefined' &&
-                    typeof recipe.protein !== 'undefined' &&
-                    typeof recipe.carbs !== 'undefined' &&
-                    typeof recipe.fat !== 'undefined'
-                ) {
-                    nutritionHTML = `
-                    <div class="mt-8 pt-8 border-t border-gray-700">
-                        <h3 class="text-xl font-semibold mb-6">Nutrition Information</h3>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
-                                <p class="text-sm text-gray-400 mb-1">Calories</p>
-                                <p class="text-2xl font-bold mb-2">${recipe.calories}</p>
-                                <div class="nutrition-bar">
-                                    <div class="nutrition-bar-fill" style="width: ${(recipe.calories / (mealData.user_goals.calories || recipe.calories) * 100)}%"></div>
-                                </div>
-                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.calories || '-'}</p>
-                            </div>
-                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
-                                <p class="text-sm text-gray-400 mb-1">Protein</p>
-                                <p class="text-2xl font-bold mb-2">${recipe.protein}g</p>
-                                <div class="nutrition-bar">
-                                    <div class="nutrition-bar-fill" style="width: ${(recipe.protein / (mealData.user_goals.protein || recipe.protein) * 100)}%"></div>
-                                </div>
-                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.protein || '-'}</p>
-                            </div>
-                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
-                                <p class="text-sm text-gray-400 mb-1">Carbs</p>
-                                <p class="text-2xl font-bold mb-2">${recipe.carbs}g</p>
-                                <div class="nutrition-bar">
-                                    <div class="nutrition-bar-fill" style="width: ${(recipe.carbs / (mealData.user_goals.carbs || recipe.carbs) * 100)}%"></div>
-                                </div>
-                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.carbs || '-'}</p>
-                            </div>
-                            <div class="bg-gray-700 bg-opacity-30 rounded-lg p-4">
-                                <p class="text-sm text-gray-400 mb-1">Fat</p>
-                                <p class="text-2xl font-bold mb-2">${recipe.fat}g</p>
-                                <div class="nutrition-bar">
-                                    <div class="nutrition-bar-fill" style="width: ${(recipe.fat / (mealData.user_goals.fat || recipe.fat) * 100)}%"></div>
-                                </div>
-                                <p class="text-sm text-gray-400 mt-1">Goal: ${mealData.user_goals.fat || '-'}</p>
-                            </div>
+            const mealDataJson = sessionStorage.getItem('mealPlan');
+            if (!mealDataJson) { window.location.href = '/'; return; }
+            const mealData = JSON.parse(mealDataJson);
+            if (!mealData || !mealData.recipe) { window.location.href = '/'; return; }
+            const container = document.getElementById('meal-container');
+            const recipe = mealData.recipe;
+            // Nutrition info HTML (conditionally rendered)
+            let nutritionHTML = '';
+            if (
+                typeof recipe.calories !== 'undefined' &&
+                typeof recipe.protein !== 'undefined' &&
+                typeof recipe.carbs !== 'undefined' &&
+                typeof recipe.fat !== 'undefined'
+            ) {
+                nutritionHTML = `
+                <div class="nutrition-box">
+                    <div class="meal-section-title mb-2">Nutrition Information</div>
+                    <div class="nutrition-row">
+                        <div>
+                            <div class="nutrition-label">Calories</div>
+                            <div class="nutrition-value calories">${recipe.calories}</div>
+                        </div>
+                        <div>
+                            <div class="nutrition-label">Protein</div>
+                            <div class="nutrition-value protein">${recipe.protein}g</div>
+                        </div>
+                        <div>
+                            <div class="nutrition-label">Carbs</div>
+                            <div class="nutrition-value carbs">${recipe.carbs}g</div>
+                        </div>
+                        <div>
+                            <div class="nutrition-label">Fat</div>
+                            <div class="nutrition-value fat">${recipe.fat}g</div>
                         </div>
                     </div>
-                    `;
-                }
-                
-                const mealCard = document.createElement('div');
-                mealCard.className = 'recipe-card bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-xl p-8 shadow-xl';
-                mealCard.innerHTML = `
-                    <div class="flex flex-col md:flex-row justify-between items-start gap-6">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-3 mb-4">
-                                <span class="px-3 py-1 bg-indigo-600 bg-opacity-50 rounded-full text-sm font-medium capitalize">${recipe.meal_type}</span>
-                                <span class="px-3 py-1 bg-purple-600 bg-opacity-50 rounded-full text-sm font-medium">${recipe.cuisine}</span>
-                            </div>
-                            <h2 class="text-3xl font-bold mb-2">${recipe.name}</h2>
-                            <div class="flex items-center gap-4 text-gray-300">
-                                <div class="flex items-center gap-1">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    <span>${recipe.prep_time + recipe.cook_time} mins</span>
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                    </svg>
-                                    <span class="capitalize">${recipe.difficulty}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-8 grid md:grid-cols-2 gap-8">
-                        <div class="bg-gray-700 bg-opacity-30 rounded-lg p-6">
-                            <h3 class="text-xl font-semibold mb-4">Ingredients</h3>
-                            <ul class="space-y-3">
-                                ${recipe.ingredients.map(ing => `
-                                    <li class="flex items-center gap-2">
-                                        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                        </svg>
-                                        <span>${ing.amount} ${ing.name}</span>
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                        <div class="bg-gray-700 bg-opacity-30 rounded-lg p-6">
-                            <h3 class="text-xl font-semibold mb-4">Instructions</h3>
-                            <ol class="space-y-4">
-                                ${recipe.instructions.map((step, index) => `
-                                    <li class="flex gap-3">
-                                        <span class="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-indigo-600 rounded-full text-sm font-medium">${index + 1}</span>
-                                        <span>${step}</span>
-                                    </li>
-                                `).join('')}
-                            </ol>
-                        </div>
-                    </div>
-                    ${nutritionHTML}
+                </div>
                 `;
-                container.appendChild(mealCard);
-
-            } catch (error) {
-                console.error('Error displaying meal:', error);
-                alert('Error displaying meal. Please try again.');
-                window.location.href = '/';
             }
+            // Dietary tags
+            let tagsHTML = '';
+            if (Array.isArray(recipe.tags) && recipe.tags.length > 0) {
+                tagsHTML = `<div class="meal-tags">${recipe.tags.map(tag => `<span class="${getTagClass(tag)}">${tag}</span>`).join('')}</div>`;
+            }
+            // Ingredients
+            let ingredientsHTML = '';
+            if (Array.isArray(recipe.ingredients)) {
+                ingredientsHTML = `
+                    <div class="meal-section-title">Ingredients</div>
+                    <ul class="ingredient-list space-y-2">
+                        ${recipe.ingredients.map(ing => `
+                            <li><input type="checkbox" class="ingredient-check"/>${ing.amount} <span class="font-semibold">${ing.name}</span></li>
+                        `).join('')}
+                    </ul>
+                `;
+            }
+            // Instructions
+            let instructionsHTML = '';
+            if (Array.isArray(recipe.instructions)) {
+                instructionsHTML = `
+                    <div class="meal-section-title mt-8">Instructions</div>
+                    <ol class="instructions-list space-y-3">
+                        ${recipe.instructions.map((step, idx) => `
+                            <li><span class="font-bold text-[#3b82f6]">${idx + 1}.</span> ${step}</li>
+                        `).join('')}
+                    </ol>
+                `;
+            }
+            // Main info row
+            let infoRowHTML = `
+                <div class="flex flex-wrap gap-6 mb-6">
+                    <div class="info-label prep-time">Prep: <span class="info-value">${recipe.prep_time} min</span></div>
+                    <div class="info-label cook-time">Cook: <span class="info-value">${recipe.cook_time} min</span></div>
+                    <div class="info-label servings">Servings: <span class="info-value">${recipe.servings}</span></div>
+                    <div class="info-label">Difficulty: <span class="info-value">${recipe.difficulty}</span></div>
+                </div>
+            `;
+            // Food image (if present)
+            let imageHTML = '';
+            if (recipe.image_url) {
+                imageHTML = `<div class="mb-6"><img src="${recipe.image_url}" alt="${recipe.name}" class="rounded-xl shadow-lg w-full object-cover" style="max-height:260px;"/></div>`;
+            }
+            const mealCard = document.createElement('div');
+            mealCard.className = 'meal-card';
+            mealCard.innerHTML = `
+                ${imageHTML}
+                ${tagsHTML}
+                <div class="meal-title">${recipe.name}</div>
+                ${infoRowHTML}
+                ${nutritionHTML}
+                <div class="grid md:grid-cols-2 gap-10 mt-8">
+                    <div>${ingredientsHTML}</div>
+                    <div>${instructionsHTML}</div>
+                </div>
+            `;
+            container.appendChild(mealCard);
         });
     </script>
 </body>
