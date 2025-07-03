@@ -631,6 +631,27 @@ def generate_meal_plan():
                         'error': f'Invalid macro value for {field}',
                         'details': f'{field} must be a number.'
                     }), 400
+            # Macro sanity check
+            calories = float(user_preferences['calories'])
+            protein = float(user_preferences['protein'])
+            carbs = float(user_preferences['carbs'])
+            fat = float(user_preferences['fat'])
+            macro_calories = (protein * 4) + (carbs * 4) + (fat * 9)
+            if macro_calories > calories * 1.1:
+                return jsonify({
+                    'error': 'Macro/calorie mismatch',
+                    'details': f'The sum of calories from macros ({macro_calories}) exceeds total calories ({calories}). Please adjust your macros or calories.'
+                }), 400
+            if macro_calories < calories * 0.7:
+                return jsonify({
+                    'error': 'Macro/calorie mismatch',
+                    'details': f'The sum of calories from macros ({macro_calories}) is much less than total calories ({calories}). Please check your inputs.'
+                }), 400
+            if protein > 400 or carbs > 1000 or fat > 300:
+                return jsonify({
+                    'error': 'Unreasonable macro value',
+                    'details': 'One or more macro values are unreasonably high.'
+                }), 400
 
         # Get available ingredients from the request. This is now a mandatory field.
         available_ingredients = user_preferences.get('available_ingredients', [])
